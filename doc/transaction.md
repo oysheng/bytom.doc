@@ -50,7 +50,7 @@ type BuildRequest struct {
 结构字段说明如下：
 - `Tx` 交易的TxData部分，该字段暂未使用，为空即可
 - `TTL` 构建交易的生存时间（单位为毫秒），意味着在该时间范围内，已经缓存的utxo不能用于再一次build交易，除非剩余的utxo足以构建一笔新的交易，否则会报错。当ttl为0时会被默认设置为600s，即5分钟
-- `TimeRange` 时间戳，意味着该交易将在该时间戳之后才会被提交到区块中，设置该值是为了延迟交易的上链
+- `TimeRange` 时间戳，意味着该交易将在该时间戳（区块高度）之后不会被提交上链，为了防止交易在网络中传输延迟而等待太久时间，如果交易没有在特定的时间范围内被打包，该交易便会失效
 - `Actions` 交易的actions结构，所有的交易都是由action构成的，`map`类型的`interface{}`保证了action类型的可扩展性。其中action中必须包含type字段，用于区分不同的action类型，action分为input和output两种类型，其详细介绍如下：
     - input action 类型：
         - issue 发行资产
@@ -62,7 +62,7 @@ type BuildRequest struct {
         - retire 销毁资产
 
 *注意事项*：
-交易必须至少包含一个input和output，（coinbase交易除外，因为coinbase交易是有系统产生，故不在此加以描述），否则交易将会报错。此外，除了BTM资产（input减去output的BTM资产作为手续费）之外，其他资产在构建input和output时，所有输入和输出的资产总和必须相等，否则交易会报出输入输出不平衡的错误信息。
+交易必须至少包含一个input和output（coinbase交易除外，因为coinbase交易是由系统产生，故不在此加以描述），否则交易将会报错。此外，除了BTM资产（input减去output的BTM资产作为手续费）之外，其他资产在构建input和output时，所有输入和输出的资产总和必须相等，否则交易会报出输入输出不平衡的错误信息。
 
 下面对所有的action进行详细说明：
 
@@ -80,7 +80,7 @@ type AssetAmount struct {
 }
 ```
 - `assets` 主要用于资产的管理，无需用户设置参数
-- `AssetAmount` 是通过protobuf序列化的存储格式，这里需要用户设置资产ID和对应的资产数目
+- `AssetAmount` 表示用户需要发行的资产ID和对应的资产数目，这里的资产ID需要通过`create-asset`创建
 
 issueAction输入的json格式如下：
 ```js
@@ -131,7 +131,7 @@ type spendUTXOAction struct {
 }
 ```
 - `accounts` 主要用于账户的管理，无需用户设置参数
-- `OutputID` 表示需要花费的UTXO
+- `OutputID` 表示需要花费的UTXO的ID，可以根据`list-unspent-outputs`查询可用的UTXO，其中`OutputID`对应该API返回结果的`id`字段
 - `ClientToken` 表示Reserve用户UTXO的限制条件，目前不填或为空即可
 
 spendUTXOAction输入的json格式如下：
@@ -293,12 +293,19 @@ type Template struct {
 结构字段说明如下：
 - `Transaction` 交易相关信息，该字段包含`TxData`和`bc.Tx`两个部分：
   - `TxData` 表示给用户展示的交易数据部分，该部分对用户可见
-  - `bc.Tx` 表示系统中处理交易的数据部分，该部分对用户不可见
+    - `Version` 交易版本
+    - `SerializedSize` 交易序列化之后的size
+    - `TimeRange` 交易提交上链的最大时间戳（区块高度）（主链区块高度到达该时间戳（区块高度）之后，如果交易没有被提交上链，该交易便会失效）
+    - `Inputs` 交易输入
+    - `Outputs` 交易输出
+  - `bc.Tx` 表示系统中处理交易用到的转换结构，该部分对用户不可见，故不做详细描述
 - `SigningInstructions` 交易的签名信息
   - `Position` 对`input action`签名的位置
-  - `WitnessComponents` 对`input action`签名需要的数据信息，其中构建交易的`signatures`为`null`，表示没有签名; 如果交易签名成功，则该字段会存在签名信息
+  - `WitnessComponents` 对`input action`签名需要的数据信息，其中build交易的`signatures`为`null`，表示没有签名; 如果交易签名成功，则该字段会存在签名信息。该字段是一个interface接口，主要包含3种不同的类型：
+    - `SignatureWitness` 对交易模板`Template`的action位置生成的合约program进行哈希，然后对hash值进行签名
+    - `RawTxSigWitness` 对交易模板`Template`的交易ID和对应action位置的InputID(该字段位于bc.Tx中)进行哈希，然后对hash值进行签名
+    - `DataWitness` 该类型无需签名，验证合约program的附加数据
 - `AllowAdditional` 是否允许交易的附加数据，如果为`true`，则交易的附加数据会添加到交易中，但是不会影响交易的执行的`program`脚本，对签名结果不会造成影响; 如果为`false`，则整个交易作为一个整体进行签名，任何数据的改变将影响整个交易的签名
-
 
 ## 2、签名交易
 API接口 sign-transaction，代码[api/hsm.go#L53](https://github.com/Bytom/bytom/blob/master/api/hsm.go#L53)
