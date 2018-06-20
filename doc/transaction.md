@@ -62,7 +62,9 @@ type BuildRequest struct {
         - retire 销毁资产
 
 *注意事项*：
-交易必须至少包含一个input和output（coinbase交易除外，因为coinbase交易是由系统产生，故不在此加以描述），否则交易将会报错。此外，除了BTM资产（input减去output的BTM资产作为手续费）之外，其他资产在构建input和output时，所有输入和输出的资产总和必须相等，否则交易会报出输入输出不平衡的错误信息。
+- 交易必须至少包含一个input和output（coinbase交易除外，因为coinbase交易是由系统产生，故不在此加以描述），否则交易将会报错。
+- 除了BTM资产（input减去output的BTM资产作为手续费）之外，其他资产在构建input和output时，所有输入和输出的资产总和必须相等，否则交易会报出输入输出不平衡的错误信息。
+- 交易的手续费： 所有inputs的BTM数量 - 所有outputs的BTM数量
 
 下面对所有的action进行详细说明：
 
@@ -80,12 +82,12 @@ type AssetAmount struct {
 }
 ```
 - `assets` 主要用于资产的管理，无需用户设置参数
-- `AssetAmount` 表示用户需要发行的资产ID和对应的资产数目，这里的资产ID需要通过`create-asset`创建
+- `AssetAmount` 表示用户需要发行的资产ID和对应的资产数目，这里的`AssetID`需要通过`create-asset`创建
 
 issueAction输入的json格式如下：
 ```js
 {
-  "amount": 10000,
+  "amount": 100000000,
   "asset_id": "3152a15da72be51b330e1c0f8e1c0db669269809da4f16443ff266e07cc43680",
   "type": "issue"
 }
@@ -115,7 +117,7 @@ spendAction输入的json格式如下：
 ```js
 {
   "account_id": "0BF63M2U00A04",
-  "amount": 20000000,
+  "amount": 2000000000,
   "asset_id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
   "type": "spend_account"
 }
@@ -155,14 +157,14 @@ type AssetAmount struct {
 	Amount  uint64   `protobuf:"varint,2,opt,name=amount" json:"amount,omitempty"`
 }
 ```
-- `Address` 表示接收资产的地址
+- `Address` 表示接收资产的地址，可以根据 `create-account-receiver` API接口创建地址
 - `AssetAmount` 表示接收的资产ID和对应的资产数目
 
 controlAddressAction输入的json格式如下：
 ```js
 {
-  "amount": 99,
-  "asset_id": "3152a15da72be51b330e1c0f8e1c0db669269809da4f16443ff266e07cc43680",
+  "amount": 100000000,
+  "asset_id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
   "address": "bm1q50u3z8empm5ke0g3ngl2t3sqtr6sd7cepd3z68",
   "type": "control_address"
 }
@@ -181,16 +183,16 @@ type AssetAmount struct {
 	Amount  uint64   `protobuf:"varint,2,opt,name=amount" json:"amount,omitempty"`
 }
 ```
-- `Program` 表示接收资产的合约脚本
+- `Program` 表示接收资产的合约脚本，可以根据 `create-account-receiver` API接口创建接收`program`（返回结果的 `program` 和 `address` 是一一对应的）
 - `AssetAmount` 表示接收的资产ID和对应的资产数目
 
 controlProgramAction输入的json格式如下：
 ```js
 {
-  "amount": 99,
-  "asset_id": "3152a15da72be51b330e1c0f8e1c0db669269809da4f16443ff266e07cc43680",
+  "amount": 100000000,
+  "asset_id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
   "control_program":"0014a3f9111f3b0ee96cbd119a3ea5c60058f506fb19",
-  "type": "control_address"
+  "type": "control_program"
 }
 ```
 
@@ -211,7 +213,7 @@ type AssetAmount struct {
 retireAction输入的json格式如下：
 ```js
 {
-  "amount": 90,
+  "amount": 900000000,
   "asset_id": "3152a15da72be51b330e1c0f8e1c0db669269809da4f16443ff266e07cc43680",
   "type": "retire"
 }
@@ -302,8 +304,15 @@ type Template struct {
 - `SigningInstructions` 交易的签名信息
   - `Position` 对`input action`签名的位置
   - `WitnessComponents` 对`input action`签名需要的数据信息，其中build交易的`signatures`为`null`，表示没有签名; 如果交易签名成功，则该字段会存在签名信息。该字段是一个interface接口，主要包含3种不同的类型：
-    - `SignatureWitness` 对交易模板`Template`的action位置生成的合约program进行哈希，然后对hash值进行签名
-    - `RawTxSigWitness` 对交易模板`Template`的交易ID和对应action位置的InputID(该字段位于bc.Tx中)进行哈希，然后对hash值进行签名
+    - `SignatureWitness` 对交易模板`Template`中交易`input action`位置的合约program进行哈希，然后对hash值进行签名
+      - `signatures` （数组类型）交易的签名，`sign-transaction`执行完成之后才会有值存在
+      - `keys` （数组类型）包含主公钥`xpub`和派生路径`derivation_path`，通过它们可以在签名阶段找到对应的派生私钥`child_xprv`，然后使用派生私钥进行签名
+      - `quorum` 账户`key` 的个数，必须和上面的`keys`的长度相等。如果`quorum` 等于1，则表示单签账户，否则为多签账户
+      - `program` 签名的数据部分，`program`的hash值作为签名数据。如果`program`为空，则会根据当前交易ID和对应action位置的InputID两部分生成一个hash，然后把它们作为指令数据自动构造一个`program` 
+    - `RawTxSigWitness` 对交易模板`Template`的交易ID和对应`input action`位置的InputID(该字段位于bc.Tx中)进行哈希，然后对hash值进行签名
+      - `signatures` （数组类型）交易的签名，`sign-transaction`执行完成之后才会有值存在
+      - `keys` （数组类型）包含主公钥`xpub`和派生路径`derivation_path`，通过它们可以在签名阶段找到对应的派生私钥`child_xprv`，然后使用派生私钥进行签名
+      - `quorum` 账户`key`的个数，必须和上面的`keys` 的长度相等。如果`quorum` 等于1，则表示单签账户，否则为多签账户
     - `DataWitness` 该类型无需签名，验证合约program的附加数据
 - `AllowAdditional` 是否允许交易的附加数据，如果为`true`，则交易的附加数据会添加到交易中，但是不会影响交易的执行的`program`脚本，对签名结果不会造成影响; 如果为`false`，则整个交易作为一个整体进行签名，任何数据的改变将影响整个交易的签名
 
