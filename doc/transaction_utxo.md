@@ -2,7 +2,7 @@
 该部分主要针对用户自己管理私钥和地址，并通过utxo来构建和发送交易。
 
 - [1、创建私钥和公钥](#1、创建私钥和公钥)
-- [2、根据公钥创建地址`address`和对应的`program`](#2、根据公钥创建地址address和对应的program)
+- [2、根据公钥创建接收对象](#2、根据公钥创建接收对象)
 - [3、找到可花费的`utxo`](#3、找到可花费的utxo)
 - [4、通过`utxo`构造交易](#4、通过utxo构造交易)
 - [5、组合交易的`input`和`output`构成交易模板](#5、组合交易的input和output构成交易模板)
@@ -26,8 +26,8 @@ func NewXKeys(r io.Reader) (xprv XPrv, xpub XPub, err error) {
 }
 ```
 
-## 2、根据公钥创建地址`address`和对应的`program`
-其中创建单签地址参考代码[account/accounts.go#L267](https://github.com/Bytom/bytom/blob/master/account/accounts.go#L267)进行相应改造为：
+## 2、根据公钥创建接收对象
+接收对象包含两种形式：`address`形式和`program`形式，两者是一一对应的，任选其一即可。其中创建单签地址参考代码[account/accounts.go#L267](https://github.com/Bytom/bytom/blob/master/account/accounts.go#L267)进行相应改造为：
 ```go
 func (m *Manager) createP2PKH(xpub chainkd.XPub) (*CtrlProgram, error) {
 	pubKey := xpub.PublicKey()
