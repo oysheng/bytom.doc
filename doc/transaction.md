@@ -5,10 +5,10 @@
 
   [action简介](#action简介)
   - [issue](#issue)
-  - [spend_account](#spendaccount)
-  - [spend_account_unspent_output](#spendaccountunspentoutput)
-  - [control_address](#controladdress)
-  - [control_program](#controlprogram)
+  - [spend_account](#spend_account)
+  - [spend_account_unspent_output](#spend_account_unspent_output)
+  - [control_address](#control_address)
+  - [control_program](#control_program)
   - [retire](#retire)
 
   [估算手续费](#估算手续费)
