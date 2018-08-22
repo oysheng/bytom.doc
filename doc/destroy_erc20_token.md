@@ -1,4 +1,4 @@
-# 销毁erc20 bytom token操作流程
+# 销毁BYTOM ERC20 TOKEN并附加主网地址的操作流程
 
 （连接以太坊网络需要先下载以太坊钱包，浏览器钱包操作相对比较方便，下面以mist浏览器钱包为例进行说明）
 
@@ -8,7 +8,7 @@
   ![image](pictures/ethereum_release.png)
 
 ## 启动以太坊钱包
-以`Ethereum-Wallet-linux64-0-11-1.zip`以太坊钱包为例，由于启动时会默认选择主网版本，可以在命令行的方式启动选择测试版本。使用`geth`节点，并且选择`rinkeby`测试网络的启动如下：
+以`Ethereum-Wallet-linux64-0-11-1.zip`以太坊钱包为例，启动时会默认选择主网，可以在启动的客户端修改网络版本，也可以通过命令行的方式选择启动网络版本。使用`geth`节点，并且选择`rinkeby`测试网络的启动如下：
 
 ```
 ./ethereumwallet --node geth --network rinkeby
@@ -18,10 +18,10 @@
 
   ![image](pictures/ethereum_wallet.png)
 
-上面创建了两个账户`account1`和`account2`，在钱包的最上端`Rinkeby`表示的是以太坊的rinkeby测试网络，如果为则显示为主网的网络标识。
+上面创建了两个账户`account1`和`account2`（账户需要用户自己创建或导入），在钱包的最上端`Rinkeby`表示的是以太坊的rinkeby测试网络，如果为则显示为主网的网络标识。
 
 ## 连接已部署的销毁合约
-点击图形界面的`CONTRACTS`，便可以进入到合约的操作界面（账户需要用户自己创建），如图所示：
+点击图形界面的`CONTRACTS`，便可以进入到合约的操作界面，如图所示：
 
   ![image](pictures/contract_index.png)
 
@@ -122,8 +122,11 @@ contract DestroyToken {
   ![image](pictures/contract_destroytoken.png)
 
 合约函数调用说明：
+
 1、`destroy`函数
+
 调用该函数销毁`token`需要3步：
+
   1）调用`BYTOM`合约的`approve`来预存用户同意需要销毁的代币数`amount`。以下示例表示账户`account1`同意将`10000 token`发送给`spender`，`spender`即`DestroyToken`合约地址，调用成功后便表示`allowed[account_addr][spender]=10000`设置成功
 
   ![image](pictures/contract_approve1.png)
@@ -137,7 +140,9 @@ contract DestroyToken {
   ![image](pictures/contract_burntoken.png)
 
 2、`destroyFrom`函数
+
 调用该函数销毁`token`需要2步：
+
   1）调用`BYTOM`合约的`approve`来预存用户同意需要销毁的代币数`amount`。以下示例表示账户`account2`同意将`20000 token`发送给`spender`，`spender`即`DestroyToken`合约地址，调用成功后便表示`allowed[account_addr][spender]=20000`设置成功
 
   ![image](pictures/contract_approve2.png)
@@ -146,6 +151,6 @@ contract DestroyToken {
 
   ![image](pictures/contract_burnfromtoken.png)
 
-不论调用哪种方式，合约调用交易是否执行成功只需查询交易的详细信息即可。下面介绍一下通过区块链浏览器查询交易是否执行成功，`TxReceipt Status`为`Success`表示销毁成功，另外通过`log`或`inputdata`可以查询到附加的主网地址信息。交易执行成功的案例如下图所示：
+合约调用交易是否执行成功需要通过查看交易的详细信息来进行辨别。下面介绍一下通过区块链浏览器查询交易是否执行成功，`TxReceipt Status`为`Success`表示销毁成功，另外通过`log`或`inputdata`可以查询到附加的主网地址信息。交易执行成功的案例如下图所示：
 
   ![image](pictures/contract_receipt.png)
