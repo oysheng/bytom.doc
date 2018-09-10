@@ -360,6 +360,7 @@ type AssetAmount struct {
 ```go
 type retireAction struct {
 	bc.AssetAmount
+	Arbitrary json.HexBytes `json:"arbitrary"`
 }
 
 type AssetAmount struct {
@@ -370,31 +371,34 @@ type AssetAmount struct {
 
 结构字段说明如下：
 - `AssetAmount` 表示销毁的资产ID和对应的资产数目
+- `Arbitrary` 表示添加的任意附加信息（十六进制字符串数据）
 
 `retireAction`的`json`格式为：
 ```js
 {
   "amount": 900000000,
-  "asset_id": "3152a15da72be51b330e1c0f8e1c0db669269809da4f16443ff266e07cc43680",
+  "asset_id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "arbitrary": "77656c636f6d65efbc8ce6aca2e8bf8ee69da5e588b0e58e9fe5ad90e4b896e7958c",
   "type": "retire"
 }
 ```
 
 例如销毁一笔资产的交易示例如下：
-（该交易表示通过账户的方式将`100000000`neu的BTM资产销毁, `retire`表示销毁指定数量的资产）
+（该交易表示通过账户的方式将`1`neu的BTM资产销毁并添加附加信息`arbitrary`, 其中`retire`表示销毁指定数量的资产）
 ```js
 {
   "base_transaction": null,
   "actions": [
     {
       "account_id": "0ER7MEFGG0A02",
-      "amount": 120000000,
+      "amount": 900000000,
       "asset_id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "type": "spend_account"
     },
     {
-      "amount": 100000000,
+      "amount": 1,
       "asset_id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "arbitrary": "77656c636f6d65efbc8ce6aca2e8bf8ee69da5e588b0e58e9fe5ad90e4b896e7958c",
       "type": "retire"
     }
   ],
