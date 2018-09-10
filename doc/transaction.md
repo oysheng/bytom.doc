@@ -371,7 +371,7 @@ type AssetAmount struct {
 
 结构字段说明如下：
 - `AssetAmount` 表示销毁的资产ID和对应的资产数目
-- `Arbitrary` 表示添加的任意附加信息（十六进制字符串数据）
+- `Arbitrary` 表示任意的附加信息（十六进制字符串数据），可为空
 
 `retireAction`的`json`格式为：
 ```js
@@ -384,7 +384,7 @@ type AssetAmount struct {
 ```
 
 例如销毁一笔资产的交易示例如下：
-（该交易表示通过账户的方式将`1`neu的BTM资产销毁并添加附加信息`arbitrary`, 其中`retire`表示销毁指定数量的资产）
+（该交易表示通过账户的方式将`1`neu的BTM资产销毁并添加了附加信息, 其中`retire`表示销毁指定数量的资产）
 ```js
 {
   "base_transaction": null,
