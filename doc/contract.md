@@ -81,6 +81,7 @@
   - 解锁合约只需要提供`clause`中的参数
   - `Signature`类型只能在`clause`的参数列表中出现，不能出现在编译合约的API中
   - 所有`string`类型的字符串都是必须以十六进制字节的`string`形式出现，否则调用编译合约API的时候会报错
+  - 如果合约包含多个`clause`，那么用户需要选择一个`clause`来解锁，在解锁合约的交易过程中需要构造参数`clause_selector`（无符号整数类型，小端存储格式）。`clause_selector`是根据合约`clause`的顺序来指定的，假如`clause`的个数`n`，那么选择对应的`clause_selector`为`0 ~ n-1`，即第一个`clause`的`clause_selector`为`0`，第二个`clause`的`clause_selector`为`1`，以此类推。
 
 如果合约参数中有`Publickey`和`Signature`(配套使用)，那么获取这些参数需要调用`list-pubkeys`接口获取。`Signature`只能出现在`clause`中，表示该参数仅仅在解锁合约的时候才会被使用，由于目前对交易的签名必须通过`sign-transaction`接口才能获取签名结果，所以解锁的时候只需提供签名的参数`root_xpub`和`derivation_path`即可，需要注意的是这些参数需要跟验证签名`pubkey`匹配起来，否则合约也会执行失败。
 
@@ -414,10 +415,10 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
 ### 单签验证合约
   `LockWithPublicKey`源代码如下：
   ```
-  contract LockWithPublicKey(publicKey: PublicKey) locks locked {
+  contract LockWithPublicKey(publicKey: PublicKey) locks valueAmount of valueAsset {
     clause unlockWithSig(sig: Signature) {
       verify checkTxSig(publicKey, sig)
-      unlock locked
+      unlock valueAmount of valueAsset
     }
   }
   ```
@@ -491,10 +492,10 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
   ```
   contract LockWithMultiSig(publicKey1: PublicKey,
                           publicKey2: PublicKey,
-                          publicKey3: PublicKey) locks value {
+                          publicKey3: PublicKey) locks valueAmount of valueAsset {
     clause spend(sig1: Signature, sig2: Signature) {
       verify checkTxMultiSig([publicKey1, publicKey2, publicKey3], [sig1, sig2])
-      unlock value
+      unlock valueAmount of valueAsset
     }
   }
   ```
@@ -591,11 +592,11 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
   ### pubkey哈希校验和单签验证合约
   `LockWithPublicKeyHash`源代码如下：
   ```
-  contract LockWithPublicKeyHash(pubKeyHash: Hash) locks value {
+  contract LockWithPublicKeyHash(pubKeyHash: Hash) locks valueAmount of valueAsset {
     clause spend(pubKey: PublicKey, sig: Signature) {
       verify sha3(pubKey) == pubKeyHash
       verify checkTxSig(pubKey, sig)
-      unlock value
+      unlock valueAmount of valueAsset
     }
   }
   ```
@@ -682,10 +683,10 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
   ### 字符串哈希校验合约
   `RevealPreimage`源代码如下：
   ```
-  contract RevealPreimage(hash: Hash) locks value {
+  contract RevealPreimage(hash: Hash) locks valueAmount of valueAsset {
     clause reveal(string: String) {
       verify sha3(string) == hash
-      unlock value
+      unlock valueAmount of valueAsset
     }
   }
   ```
@@ -699,6 +700,15 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
 
   对应的解锁合约的参数如下：（注意解锁合约参数的顺序，否则会执行VM失败）
   - `string` :
+  ```js
+  {
+    "type": "string",
+    "raw_data": {
+      "value": "string"
+    }
+  }
+  ```
+  或者 （`string`的16进制为`737472696e67`）
   ```js
   {
     "type": "data",
@@ -717,9 +727,9 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
         "output_id": "35fe216572bea7d81effd2fed2db1bc257f977dfa492299742a0dee2a9ae1c8e",
         "arguments": [
           {
-            "type": "data",
+            "type": "string",
             "raw_data": {
-              "value": "737472696e67"
+              "value": "string"
             }
           }
         ],
@@ -751,14 +761,14 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
   contract TradeOffer(assetRequested: Asset,
                     amountRequested: Amount,
                     seller: Program,
-                    cancelKey: PublicKey) locks offered {
-    clause trade() requires payment: amountRequested of assetRequested {
-      lock payment with seller
-      unlock offered
+                    cancelKey: PublicKey) locks valueAmount of valueAsset {
+    clause trade() {
+      lock amountRequested of assetRequested with seller
+      unlock valueAmount of valueAsset
     }
     clause cancel(sellerSig: Signature) {
       verify checkTxSig(cancelKey, sellerSig)
-      unlock offered
+      unlock valueAmount of valueAsset
     }
   }
   ```
@@ -773,25 +783,34 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
 
   添加合约参数后的合约程序参考结果如下：`20e9108d3ca8049800727f6a3505b3a2710dc579405dde03c250f16d9a7e1e6e78160014c5a5b563c4623018557fb299259542b8739f6bc20163201e074b22ed7ae8470c7ba5d8a7bc95e83431a753a17465e8673af68a82500c22741a547a6413000000007b7b51547ac1631a000000547a547aae7cac00c0`
 
-  对应的解锁合约的参数如下：（注意该合约包含两个`clause`，在解锁合约的时候任选其一即可，其中`clause`的选择是通过合约代码位置偏移来决定的，通过调用API接口`decode-program`可以查看对应的偏移量; 此外还需注意解锁合约参数的顺序，否则会执行VM失败）
+  对应的解锁合约的参数如下：（注意该合约包含两个`clause`，在解锁合约的时候任选其一即可，其中`clause_selector`指的是选择的解锁`clause`在合约中的位置（位置序号从`0`开始计算），此外还需注意解锁合约参数的顺序，否则会执行VM失败）
   - `clause trade` 解锁参数 :
     - `clause_selector` : 
     ```js
     {
+      "type": "integer",
+      "raw_data": {
+        "value": 0
+      }
+    }
+    ```
+    或
+    ```js
+    {
       "type": "data",
       "raw_data": {
-        "value": "00000000"
+        "value": "00"
       }
     }
     ```
 
-    - `payment` : (合约中`requires`的字段表示解锁账户需要支付对应的`amountRequested`数量的`assetRequested`资产到对应的接收对象`seller`，注意上述参数必须严格匹配，否则合约执行将失败)
+    - `lock`语句的交易`action`构造 : `lock amountRequested of assetRequested with seller`语句表示解锁账户需要支付对应的`amountRequested`数量的`assetRequested`资产到对应的接收对象`seller`，注意上述参数必须严格匹配，否则合约执行将失败.
     ```js
     {
       "amount": 99,
       "asset_id": "2a1861ba3a5f7bbdb98392b33289465b462fe8e9d4b9c00f78cbcb1ac20fa93f",
-      "control_program": "0014c5a5b563c4623018557fb299259542b8739f6bc2",
-      "type": "control_program"
+      "control_program": "0014c5a5b563c4623018557fvalue299259542b8739f6bc2",
+      "type": "control_program"value
     },
     {
       "account_id": "0G1JJF0KG0A06",
@@ -811,9 +830,9 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
           "output_id": "9f3a63d2f8352a6891dadd8a8337268873c84a852594f35b0b9815a4b9d56d86",
           "arguments": [
             {
-              "type": "data",
+              "type": "integer",
               "raw_data": {
-                "value": "00000000"
+                "value": 0
               }
             }
           ],
@@ -867,9 +886,18 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
     - `clause_selector` :
     ```js
     {
+      "type": "integer",
+      "raw_data": {
+        "value": 1
+      }
+    }
+    ```
+    或
+    ```js
+    {
       "type": "data",
       "raw_data": {
-        "value": "13000000"
+        "value": "01"
       }
     }
     ```
@@ -877,6 +905,7 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
     其对应的解锁合约交易模板示例如下:
     ```js
     // clause cancel
+
     {
       "base_transaction": null,
       "actions": [
@@ -894,9 +923,9 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
               }
             },
             {
-              "type": "data",
+              "type": "integer",
               "raw_data": {
-                "value": "13000000"
+                "value": 1
               }
             }
           ],
@@ -927,14 +956,14 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
   ```
   contract Escrow(agent: PublicKey,
                 sender: Program,
-                recipient: Program) locks value {
+                recipient: Program) locks valueAmount of valueAsset {
     clause approve(sig: Signature) {
       verify checkTxSig(agent, sig)
-      lock value with recipient
+      lock valueAmount of valueAsset with recipient
     }
     clause reject(sig: Signature) {
       verify checkTxSig(agent, sig)
-      lock value with sender
+      lock valueAmount of valueAsset with sender
     }
   }
   ```
@@ -948,7 +977,7 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
 
   添加合约参数后的合约程序参考结果如下：`160014929ec7d92f89d74716ba9591eaea588aa1867f75160014905df16bc248790676744bab063a1ae810803bd720e9108d3ca8049800727f6a3505b3a2710dc579405dde03c250f16d9a7e1e6e787428537a641a000000537a7cae7cac6900c3c251557ac16328000000537a7cae7cac6900c3c251547ac100c0`
 
-  对应的解锁合约的参数如下：（注意该合约包含两个`clause`，在解锁合约的时候任选其一即可，其中`clause`的选择是通过合约代码位置偏移来决定的，通过调用API接口`decode-program`可以查看对应的偏移量; 此外还需注意解锁合约参数的顺序，否则会执行VM失败）
+  对应的解锁合约的参数如下：（注意该合约包含两个`clause`，在解锁合约的时候任选其一即可，其中`clause_selector`指的是选择的解锁`clause`在合约中的位置（位置序号从`0`开始计算），此外还需注意解锁合约参数的顺序，否则会执行VM失败）
   - `clause approve` 解锁参数 :
     - `sellerSig` :
     ```js
@@ -967,9 +996,18 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
     - `clause_selector` :
     ```js
     {
+      "type": "integer",
+      "raw_data": {
+        "value": 0
+      }
+    }
+    ```
+    或
+    ```js
+    {
       "type": "data",
       "raw_data": {
-        "value": "00000000"
+        "value": "00"
       }
     }
     ```
@@ -994,9 +1032,9 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
               }
             },
             {
-              "type": "data",
+              "type": "integer",
               "raw_data": {
-                "value": "00000000"
+                "value": 0
               }
             }
           ],
@@ -1037,12 +1075,21 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
     - `clause_selector` :
     ```js
     {
-      "type": "data",
+      "type": "integer",
       "raw_data": {
-        "value": "1a000000"
+        "value": 1
       }
     }
-    ```  
+    ```
+    或
+    ```js
+    {
+      "type": "data",
+      "raw_data": {
+        "value": "01"
+      }
+    }
+    ``` 
 
     其对应的解锁合约交易模板示例如下:（注意接收`control_program`字段必须为`sender`，否则执行失败）
     ```js
@@ -1064,9 +1111,9 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
               }
             },
             {
-              "type": "data",
+              "type": "integer",
               "raw_data": {
-                "value": "1a000000"
+                "value": 1
               }
             }
           ],
@@ -1099,14 +1146,14 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
                         amountLoaned: Amount,
                         blockHeight: Integer,
                         lender: Program,
-                        borrower: Program) locks collateral {
-    clause repay() requires payment: amountLoaned of assetLoaned {
-      lock payment with lender
-      lock collateral with borrower
+                        borrower: Program) locks valueAmount of valueAsset {
+    clause repay() {
+      lock amountLoaned of assetLoaned with lender
+      lock valueAmount of valueAsset with borrower
     }
     clause default() {
       verify above(blockHeight)
-      lock collateral with lender
+      lock valueAmount of valueAsset with lender
     }
   }
   ```
@@ -1122,19 +1169,28 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
 
   添加合约参数后的合约程序参考结果如下：`160014929ec7d92f89d74716ba9591eaea588aa1867f75160014905df16bc248790676744bab063a1ae810803bd70280070158201e074b22ed7ae8470c7ba5d8a7bc95e83431a753a17465e8673af68a82500c227426557a641b000000007b7b51557ac16951c3c251557ac163260000007bcd9f6900c3c251567ac100c0`
 
-  对应的解锁合约的参数如下：（注意该合约包含两个`clause`，在解锁合约的时候任选其一即可，其中`clause`的选择是通过合约代码位置偏移来决定的，通过调用API接口`decode-program`可以查看对应的偏移量; 此外还需注意解锁合约参数的顺序，否则会执行VM失败）
+  对应的解锁合约的参数如下：（注意该合约包含两个`clause`，在解锁合约的时候任选其一即可，其中`clause_selector`指的是选择的解锁`clause`在合约中的位置（位置序号从`0`开始计算），此外还需注意解锁合约参数的顺序，否则会执行VM失败）
   - `clause repay` 解锁参数 :
     - `clause_selector` : 
     ```js
     {
+      "type": "integer",
+      "raw_data": {
+        "value": 0
+      }
+    }
+    ```
+    或
+    ```js
+    {
       "type": "data",
       "raw_data": {
-        "value": "00000000"
+        "value": "00"
       }
     }
     ```
 
-    - `payment` : (合约中`requires`的字段表示解锁账户需要支付对应的`amountLoaned`数量的`assetLoaned`资产到对应的接收对象`lender`，注意上述参数必须严格匹配，否则合约执行将失败; 在该`clause`中解锁对象`collateral`是被接收对象`borrower`锁定的，所以该参数也需要匹配; 此外该合约使用了两个`lock`语句，其解锁模板需要按下面的方式进行顺序排列)
+    - 连续两个`lock`语句的交易`action`构造 : `lock amountLoaned of assetLoaned with lender`语句表示解锁账户需要支付对应的`amountLoaned`数量的`assetLoaned`资产到对应的接收对象`lender`; `lock valueAmount of valueAsset with borrower`语句表示将合约锁定的`valueAmount`数量的`valueAsset`资产到对应的接收对象`borrower`。注意上述参数必须严格匹配，否则合约执行将失败.
     ```js
     {
       "amount": 88,
@@ -1166,9 +1222,9 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
           "output_id": "3cf74c303558b7343cfa20b32ccddfd8e66293ae1970f7612ca6cb9a006e76bc",
           "arguments": [
             {
-              "type": "data",
+              "type": "integer",
               "raw_data": {
-                "value": "00000000"
+                "value": 0
               }
             }
           ],
@@ -1208,9 +1264,18 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
     - `clause_selector` :
     ```js
     {
+      "type": "integer",
+      "raw_data": {
+        "value": 1
+      }
+    }
+    ```
+    或
+    ```js
+    {
       "type": "data",
       "raw_data": {
-        "value": "1b000000"
+        "value": "01"
       }
     }
     ```
@@ -1225,9 +1290,9 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
           "output_id": "3cf74c303558b7343cfa20b32ccddfd8e66293ae1970f7612ca6cb9a006e76bc",
           "arguments": [
             {
-              "type": "data",
+              "type": "integer",
               "raw_data": {
-                "value": "1b000000"
+                "value": 1
               }
             }
           ],
@@ -1260,16 +1325,16 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
                     strikeCurrency: Asset,
                     seller: Program,
                     buyerKey: PublicKey,
-                    blockHeight: Integer) locks underlying {
-    clause exercise(buyerSig: Signature) requires payment: strikePrice of strikeCurrency {
+                    blockHeight: Integer) locks valueAmount of valueAsset {
+    clause exercise(buyerSig: Signature) {
       verify below(blockHeight)
       verify checkTxSig(buyerKey, buyerSig)
-      lock payment with seller
-      unlock underlying
+      lock strikePrice of strikeCurrency with seller
+      unlock valueAmount of valueAsset
     }
     clause expire() {
       verify above(blockHeight)
-      lock underlying with seller
+      lock valueAmount of valueAsset with seller
     }
   }
   ```
@@ -1285,7 +1350,7 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
 
   添加合约参数后的合约程序参考结果如下：`02180c20e9108d3ca8049800727f6a3505b3a2710dc579405dde03c250f16d9a7e1e6e78160014905df16bc248790676744bab063a1ae810803bd7201e074b22ed7ae8470c7ba5d8a7bc95e83431a753a17465e8673af68a82500c2201c7742c557a6420000000547acda069547a547aae7cac69007c7b51547ac1632c000000547acd9f6900c3c251567ac100c0`
 
-  对应的解锁合约的参数如下：（注意该合约包含两个`clause`，在解锁合约的时候任选其一即可，其中`clause`的选择是通过合约代码位置偏移来决定的，通过调用API接口`decode-program`可以查看对应的偏移量; 此外还需注意解锁合约参数的顺序，否则会执行VM失败）
+  对应的解锁合约的参数如下：（注意该合约包含两个`clause`，在解锁合约的时候任选其一即可，其中`clause_selector`指的是选择的解锁`clause`在合约中的位置（位置序号从`0`开始计算），此外还需注意解锁合约参数的顺序，否则会执行VM失败）
   - `clause exercise` 解锁参数 :
     - `buyerSig` : 
     ```js
@@ -1304,14 +1369,23 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
     - `clause_selector` : 
     ```js
     {
+      "type": "integer",
+      "raw_data": {
+        "value": 0
+      }
+    }
+    ```
+    或
+    ```js
+    {
       "type": "data",
       "raw_data": {
-        "value": "00000000"
+        "value": "00"
       }
     }
     ```
 
-    - `payment` : (合约中`requires`的字段表示解锁账户需要支付对应的`strikePrice`数量的`strikeCurrency`资产到对应的接收对象`seller`，注意上述参数必须严格匹配，否则合约执行将失败)
+    - `lock`语句的交易`action`构造 : `lock strikePrice of strikeCurrency with seller`语句表示解锁账户需要支付对应的`strikePrice`数量的`strikeCurrency`资产到对应的接收对象`seller`，注意上述参数必须严格匹配，否则合约执行将失败.
     ```js
     {
       "amount": 199,
@@ -1347,9 +1421,9 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
               }
             },
             {
-              "type": "data",
+              "type": "integer",
               "raw_data": {
-                "value": "00000000"
+                "value": 0
               }
             }
           ],
@@ -1389,9 +1463,18 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
     - `clause_selector` : 
     ```js
     {
+      "type": "integer",
+      "raw_data": {
+        "value": 1
+      }
+    }
+    ```
+    或
+    ```js
+    {
       "type": "data",
       "raw_data": {
-        "value": "20000000"
+        "value": "01"
       }
     }
     ```
@@ -1406,9 +1489,9 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
           "output_id": "7afa15ad39356a7e6dc363fba823146ecb0132967f067ddfa13494a34a984518",
           "arguments": [
             {
-              "type": "data",
+              "type": "integer",
               "raw_data": {
-                "value": "20000000"
+                "value": 1
               }
             }
           ],
