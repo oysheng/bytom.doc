@@ -308,11 +308,65 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
 ----
 
 ### 解锁合约
-`unlock`（解锁）合约，即调用合约，其本质是通过给交易添加相应的合约参数以便合约程序`program`在虚拟机中执行成功，目前合约相关的参数都可以通过`build-transaction`中的Action结构`spend_account_unspent_output`中的数组参数`arguments`进行添加，其中参数主要有两种类型：
-  - `rawTxSigArgument` 签名相关的参数，主要包含主公钥`xpub`和其对应的派生路径`derivation_path`，而待验证的`publickey`是通过该主公钥和派生路径生成的子公钥生成的（这些参数可以通过API接口`list-pubkeys`获取）
-    - `xpub` 主公钥
-    - `derivation_path` 派生路径，为了形成子私钥和子公钥
-  - `dataArgument` 其他类型的参数，其数值是`[]byte`类型的`string`格式
+`unlock`（解锁）合约，即调用合约，其本质是通过给交易添加相应的合约参数以便合约程序`program`在虚拟机中执行成功，目前合约相关的参数都可以通过`build-transaction`中的`Action`结构`spend_account_unspent_output`中的数组参数`arguments`进行添加，其中参数如下：
+
+1） `RawTxSigArgument` 签名相关的参数，`type`类型为`raw_tx_signature`，主要包含主公钥`xpub`和其对应的派生路径`derivation_path`，而待验证的`publickey`是通过该主公钥和派生路径生成的子公钥生成的（这些参数可以通过API接口`list-pubkeys`获取）
+  - `xpub` 主公钥
+  - `derivation_path` 派生路径，为了形成子私钥和子公钥
+  
+参数格式如下：
+```js
+{
+  "type": "raw_tx_signature",
+  "raw_data": {
+    "xpub": "5c6145b241b1147987565719657a0506ebb417a2e110a235a42cfb40951880f447432f930ce9fd1a6b7e51b3ddbfdc7adb57d33448f93c0defb4de630703a144",
+    "derivation_path": [
+      "010100000000000000",
+      "0100000000000000"
+    ]
+  }
+}
+```
+
+2） `DataArgument` 数据类型参数，`type`类型为`data`，该类型可以兼容除了`rawTxSigArgument`以外的所有合约参数类型，其值是16进制的字符串，需要注意的是`integer`整数类型是小端存储格式。参数格式如下：（以`publickey`为例）
+```js
+{
+  "type": "data",
+  "raw_data": {
+    "value": "b3f37834dfa74174e9f0d208302e77c637cfe66c3e37fe1e1574e416b3516e89"
+  }
+}
+```
+
+3）`BoolArgument` 布尔类型参数，`type`类型为`boolean`，该类型取值为`true`或`false`。参数格式如下：
+```js
+{
+  "type": "boolean",
+  "raw_data": {
+    "value": true
+  }
+}
+```
+
+4）`IntegerArgument` 整型类型参数，`type`类型为`integer`。参数格式如下：
+```js
+{
+  "type": "integer",
+  "raw_data": {
+    "value": 10000
+  }
+}
+```
+
+5）`StrArgument` 字符串类型参数，`type`类型为`string`。参数格式如下：
+```js
+{
+  "type": "string",
+  "raw_data": {
+    "value": "this is a test string"
+  }
+}
+```
 
 以合约`LockWithPublicKey`为例，其解锁合约交易的模板如下：
 ```js
