@@ -19,19 +19,20 @@
 - [区块链系统模型简介](#区块链系统模型简介)
 
 ## equity合约简介
-  equity是bytom用于表达合约程序而使用的高级语言，主要用于描述bytom链上特定的资产： 
+  `equity`是用于在比原链上表达合约程序而使用的高级语言，主要用于描述比原链上特定的资产： 
   - 区块链上的所有资产都是锁定在合约`program`中， 资产值`valueAmount of valueAsset`(即`UTXO`）一旦被一个合约解锁`unlock`，仅仅是为了被一个或多个其他合约来进行锁定`lock`
   - 合约保护资产`valueAmount of valueAsset`(即`UTXO`）的方式是采用执行虚拟机并通过`verify`指令来验证的交易要花费这个资产`value`是否达到了我的条件
 
 ### 合约组成
-  contract ContractName ( parameters ) locks valueAmount of valueAsset { clauses }
+  `contract ContractName ( parameters ) locks valueAmount of valueAsset { clauses }`
+
   - `ContractName` 合约名，用户自定义
   - `parameters` 合约参数列表，其类型名必须符合合约语言的基本类型 
   - `valueAmount of valueAsset` 资产值（即UTXO的资产类型和对应的值）标识符，用户可以自定义
   - `clauses` 条款（即函数）列表（一个或多个）
 
 ### 条款（函数）组成
-  clause ClauseName ( parameters ) { statements }
+  `clause ClauseName ( parameters ) { statements }`
 
   - `ClauseName` 条款/函数名，用户自定义
   - `parameters` 条款/函数参数列表
@@ -46,37 +47,40 @@
   - `assign`语句 自定义变量赋值语句，模式如`assign identifier = expression`，其中`identifier`必须为`define`语句中用户自定义的变量，禁止修改`contract`和`clause`中的变量
   - `if-else`语句 条件判断语句，模式如`if expression { statements }`或`if expression { statements } else { statements }`
 
-合约的基本类型：（`Time`类型暂已停用）
-    `Amount Asset Boolean Hash Integer Program PublicKey Signature String`
-
-内置函数：（涉及时间的内置函数`before`和`after`暂已停用，替代方法为验证区块高度的函数`below`和`above`）
-  - abs(n) 返回数值n的绝对值.
-  - min(x, y) 返回两个数值x和y中最小的一个.
-  - max(x, y) 返回两个数值x和y中最大的一个.
-  - size(s) 返回任意类型的字节大小size.
-  - concat(s1, s2) 返回连接两个字符串s1和s2生成新的字符串.
-  - concatpush(s1, s2) 将两个字符串类型的虚拟机执行操作码s1和s2连接起来(即将s2拼接在s1的后面），然后将他们push到栈中. 该操作函数主要用于嵌套合约中.
-  - below(height) 判断当前区块高度是否低于参数height，如果是则返回true，否则返回false.
-  - above(height) 判断当前区块高度是否高于参数height，如果是则返回true，否则返回false.
-  - sha3(s) 返回byte类型字符串参数s的SHA3-256的哈希运算结果.
-  - sha256(s) 返回byte类型字符串参数s的SHA-256的哈希运算结果.
-  - checkTxSig(key, sig) 根据一个PublicKey和一个Signature验证交易的签名是否正确.
-  - checkTxMultiSig([key1, key2, ...], [sig1, sig2, ...]) 根据多个PublicKey和多个Signature验证交易的多重签名是否正确.
+### 内置函数
+  - `abs(n)` 返回数值`n`的绝对值.
+  - `min(x, y)` 返回两个数值`x`和`y`中最小的一个.
+  - `max(x, y)` 返回两个数值`x`和`y`中最大的一个.
+  - `size(s)` 返回任意类型的字节大小`size`.
+  - `concat(s1, s2)` 返回连接两个字符串`s1`和`s2`生成新的字符串.
+  - `concatpush(s1, s2)` 将两个字符串类型的虚拟机执行操作码`s1`和`s2`连接起来(即将`s2`拼接在`s1`的后面），然后将他们`push`到栈中. 该操作函数主要用于嵌套合约中.
+  - `below(height)` 判断当前区块高度是否低于参数`height`，如果是则返回`true`，否则返回`false`.
+  - `above(height)` 判断当前区块高度是否高于参数`height`，如果是则返回`true`，否则返回`false`.
+  - `sha3(s)` 返回字节类型字符串参数`s`的`SHA3-256`的哈希运算结果.
+  - `sha256(s)` 返回字节类型字符串参数`s`的`SHA-256`的哈希运算结果.
+  - `checkTxSig(key, sig)` 根据一个`PublicKey`和一个`Signature`验证交易的签名是否正确.
+  - `checkTxMultiSig([key1, key2, ...], [sig1, sig2, ...])` 根据多个`PublicKey`和多个`Signature`验证交易的多重签名是否正确.
 
 ----
 
 ## 合约交易构造流程
 ### 合约参数构造
-  合约参数主要涉及两个方面，一个是编译合约`contract`中的参数，另一个是解锁合约`clause`中的参数。合约的基本类型已做简单描述，对应编译合约的API接口`compile`中参数类型只有如下3种：
-  - `boolean` - 布尔类型的合约参数，对应的基本类型是`Boolean`.
-  - `integer` - 整数类型的合约参数，对应的基本类型包括：`Integer`、`Amount`.
-  - `string` - 字符串类型的合约参数，对应的基本类型包括：`String`、`Asset`、`Hash`、`Program`、`PublicKey`.
+  合约参数主要涉及两个方面，一个是编译合约`contract`中的参数，另一个是解锁合约`clause`中的参数。比原合约的基本类型如下：
+  - `boolean` - 布尔类型，值为`true`或`false`.
+  - `Integer` - 整数类型，取值范围为`[-2^63, 2^63-1]`.
+  - `Amount` - 无符号整数类型，取值范围为`[0, 2^63-1]`.
+  - `Asset` - 资产类型，32个字节长度的资产ID.
+  - `Hash` - 哈希类型，32个字节长度的`hash`值.
+  - `PublicKey` - 公钥类型，32个字节长度的`publickey`.
+  - `Signature` - 签名类型，该类型需要根据`publickey`对应的主公钥`root_xpub`和`derivation_path`来构造，且只能用于`clause`的参数列表中.
+  - `Program` - 程序类型，接收`program`，跟地址是一一对应.
+  - `String` - 字符串类型，16进制字符串.
 
 注意事项：
   - 编译合约API接口`compile`只需要使用`contract`中的参数
   - 解锁合约只需要提供`clause`中的参数
   - `Signature`类型只能在`clause`的参数列表中出现，不能出现在编译合约的API中
-  - 所有`string`类型的字符串都是必须以十六进制字节的string形式出现，否则调用编译合约API的时候会报错
+  - 所有`string`类型的字符串都是必须以十六进制字节的`string`形式出现，否则调用编译合约API的时候会报错
 
 如果合约参数中有`Publickey`和`Signature`(配套使用)，那么获取这些参数需要调用`list-pubkeys`接口获取。`Signature`只能出现在`clause`中，表示该参数仅仅在解锁合约的时候才会被使用，由于目前对交易的签名必须通过`sign-transaction`接口才能获取签名结果，所以解锁的时候只需提供签名的参数`root_xpub`和`derivation_path`即可，需要注意的是这些参数需要跟验证签名`pubkey`匹配起来，否则合约也会执行失败。
 
