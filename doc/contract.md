@@ -66,7 +66,7 @@
 ## 合约交易构造流程
 ### 合约参数构造
   合约参数主要涉及两个方面，一个是编译合约`contract`中的参数，另一个是解锁合约`clause`中的参数。比原合约的基本类型如下：
-  - `boolean` - 布尔类型，值为`true`或`false`.
+  - `Boolean` - 布尔类型，值为`true`或`false`.
   - `Integer` - 整数类型，取值范围为`[-2^63, 2^63-1]`.
   - `Amount` - 无符号整数类型，取值范围为`[0, 2^63-1]`.
   - `Asset` - 资产类型，32个字节长度的资产ID.
@@ -128,23 +128,18 @@
 ### 编译合约
 调用API接口`compile`编译合约。如果合约`contract`语句上有参数`contract parameters`的话，可以在调用编译合约API接口`compile`的时候加上相关参数进行实例化，这样编译后返回的结果中`program`字段会限定合约的解锁参数，否则返回的`program`仅仅是合约的执行步骤流程，在缺少合约参数的情况下，需要用户自定义相关的合约参数，否则合约锁定的资产会存在泄漏的风险。
 
-合约的基本类型已做简单描述，对应编译合约的API接口`compile`中参数类型只有如下3种：
-  - `boolean` - 布尔类型的合约参数，对应的基本类型是`Boolean`.
-  - `integer` - 整数类型的合约参数，对应的基本类型包括：`Integer`、`Amount`.
-  - `string` - 字符串类型的合约参数，对应的基本类型包括：`String`、`Asset`、`Hash`、`Program`、`PublicKey`.
-
 参数：
 - `String` - *contract*, 合约内容.
 - `Array of Object` - *args*, 合约参数结构体（数组类型）.
-  - `Boolean` - *boolean*, 布尔类型的合约参数.
-  - `Integer` - *integer*, 整数类型的合约参数.
-  - `String` - *string*, 字符串类型的合约参数.
+  - `Boolean` - *boolean*, 布尔类型的合约参数，对应的基本类型是`Boolean`.
+  - `Integer` - *integer*, 整数类型的合约参数，对应的基本类型包括：`Integer`、`Amount`.
+  - `String` - *string*, 字符串类型的合约参数，对应的基本类型包括：`String`、`Asset`、`Hash`、`Program`、`PublicKey`.
 
 以`LockWithPublicKey`为例，其请求和响应的json格式如下：
 ```js
 // Request
 {
-  "contract": "contract LockWithPublicKey(publicKey: PublicKey) locks locked { clause unlockWithSig(sig: Signature) { verify checkTxSig(publicKey, sig) unlock locked }}",
+  "contract": "contract LockWithPublicKey(publicKey: PublicKey) locks valueAmount of valueAsset { clause unlockWithSig(sig: Signature) { verify checkTxSig(publicKey, sig) unlock valueAmount of valueAsset }}",
   "args": [
     {
       "string": "e9108d3ca8049800727f6a3505b3a2710dc579405dde03c250f16d9a7e1e6e78"
@@ -155,7 +150,7 @@
 // Result
 {
   "name": "LockWithPublicKey",
-  "source": "contract LockWithPublicKey(publicKey: PublicKey) locks locked { clause unlockWithSig(sig: Signature) { verify checkTxSig(publicKey, sig) unlock locked }}",
+  "source": "contract LockWithPublicKey(publicKey: PublicKey) locks valueAmount of valueAsset { clause unlockWithSig(sig: Signature) { verify checkTxSig(publicKey, sig) unlock valueAmount of valueAsset }}",
   "program": "20e9108d3ca8049800727f6a3505b3a2710dc579405dde03c250f16d9a7e1e6e787403ae7cac00c0",
   "params": [
     {
@@ -190,7 +185,7 @@
 ----
 
 ### 锁定合约
-lock（锁定）合约，即部署合约，其本质是调用`build-transaction`接口将资产发送到合约特定的`program`，只需将接收方`control_program`设置为指定合约即可，构造锁定合约交易的模板如下：（注意：合约交易暂时不支持接收方资产为BTM资产的交易）
+`lock`（锁定）合约，即部署合约，其本质是调用`build-transaction`接口将资产发送到合约特定的`program`，只需将接收方`control_program`设置为指定合约即可，构造锁定合约交易的模板如下：（注意：合约交易暂时不支持接收方资产为BTM资产的交易）
 ```js
 // Request
 {
@@ -282,7 +277,7 @@ lock（锁定）合约，即部署合约，其本质是调用`build-transaction`
 部署合约交易发送成功之后，接下来便需要对合约锁定的资产进行解锁，解锁合约之前需要找到合约的UTXO。
 
 可以通过调用API接口`list-unspent-outputs`来查找，在查合约UTXO的情况下必须将`smart_contract`设置为`true`，否则会查不到，其参数如下：
-- `String` - *id*, UTXO对应的outputID.
+- `String` - *id*, UTXO对应的`outputID`，可以根据发布合约交易的输出`action`中的找到.
 - `Boolean` - *smart_contract*, 是否展示合约的UTXO，默认不显示.
 
 对应的输入输出结果如下：
@@ -312,11 +307,11 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
 ----
 
 ### 解锁合约
-unlock（解锁）合约，即调用合约，其本质是通过给交易添加相应的合约参数以便合约程序`program`在虚拟机中执行成功，目前合约相关的参数都可以通过`build-transaction`中的Action结构`spend_account_unspent_output`中的数组参数`arguments`进行添加，其中参数主要有两种类型：
+`unlock`（解锁）合约，即调用合约，其本质是通过给交易添加相应的合约参数以便合约程序`program`在虚拟机中执行成功，目前合约相关的参数都可以通过`build-transaction`中的Action结构`spend_account_unspent_output`中的数组参数`arguments`进行添加，其中参数主要有两种类型：
   - `rawTxSigArgument` 签名相关的参数，主要包含主公钥`xpub`和其对应的派生路径`derivation_path`，而待验证的`publickey`是通过该主公钥和派生路径生成的子公钥生成的（这些参数可以通过API接口`list-pubkeys`获取）
     - `xpub` 主公钥
     - `derivation_path` 派生路径，为了形成子私钥和子公钥
-  - `dataArgument` 其他类型的参数，其数值是[]byte类型的string格式
+  - `dataArgument` 其他类型的参数，其数值是`[]byte`类型的`string`格式
 
 以合约`LockWithPublicKey`为例，其解锁合约交易的模板如下：
 ```js
