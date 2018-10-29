@@ -20,32 +20,31 @@
 
 ## equity合约简介
   equity是bytom用于表达合约程序而使用的高级语言，主要用于描述bytom链上特定的资产： 
-  - 区块链上的所有资产都是锁定在合约`program`中， 资产值`value`（即UTXO）一旦被一个合约解锁`unlock`，仅仅是为了被一个或多个其他合约来进行锁定`lock`
-  - 合约保护资产`value`（即UTXO）的方式是采用执行虚拟机并通过`verify`指令来验证的交易要花费这个资产`value`是否达到了我的条件
+  - 区块链上的所有资产都是锁定在合约`program`中， 资产值`valueAmount of valueAsset`(即`UTXO`）一旦被一个合约解锁`unlock`，仅仅是为了被一个或多个其他合约来进行锁定`lock`
+  - 合约保护资产`valueAmount of valueAsset`(即`UTXO`）的方式是采用执行虚拟机并通过`verify`指令来验证的交易要花费这个资产`value`是否达到了我的条件
 
 ### 合约组成
-  contract ContractName ( parameters ) locks value { clauses }
+  contract ContractName ( parameters ) locks valueAmount of valueAsset { clauses }
   - `ContractName` 合约名，用户自定义
   - `parameters` 合约参数列表，其类型名必须符合合约语言的基本类型 
-  - `value` 资产值（即UTXO的资产类型和对应的值）标识符，用户可以自定义
+  - `valueAmount of valueAsset` 资产值（即UTXO的资产类型和对应的值）标识符，用户可以自定义
   - `clauses` 条款（即函数）列表（一个或多个）
 
 ### 条款（函数）组成
   clause ClauseName ( parameters ) { statements }
-  
-  或
-  
-  clause ClauseName ( parameters ) requires name : amount of asset { statements }
 
   - `ClauseName` 条款/函数名，用户自定义
   - `parameters` 条款/函数参数列表
-  - `payments` 花费UTXO需要的其他限制条件。例如进行币币交易的时候需要验证交易的另一方能够提供对应的资产值，该限制条件的使用场景主要为不同资产类型的合约交易           
+  - `statements` 验证语句           
 
 ### 语句组成
-  statements 合约语句（一条或多条），代码语句只能是verify、lock和unlock
-  - `verify`语句 模式如`verify expression`，其中`expression`的结果必须是bool类型，为true才能继续往下执行
-  - `unlock`语句 模式如`unlock value`，其中`value`表示对应的资产值
-  - `lock`语句 模式如`lock value with program`，其中`value`表示对应的资产值，而`program`必须为Program基本类型
+  statements 合约语句（一条或多条），合约语句除了`verify`、`lock`和`unlock`之外，目前还新增加了`define`、`assign`和`if-else`语句的支持
+  - `verify`语句 验证条件语句，模式如`verify expression`，其中`expression`的结果必须是bool类型，为true才能继续往下执行
+  - `unlock`语句 解锁合约资产语句，模式如`unlock valueAmount of valueAsset`，其中`valueAmount of valueAsset`表示对应的资产值
+  - `lock`语句 锁定合约资产语句，模式如`lock valueAmount of valueAsset with program`，其中`valueAmount of valueAsset`表示对应的资产值，而`program`表示接收对象且必须为Program类型
+  - `define`语句 自定义变量语句，模式如`define identifier := expression`，其中`identifier`表示自定义的变量
+  - `assign`语句 自定义变量赋值语句，模式如`assign identifier = expression`，其中`identifier`必须为`define`语句中用户自定义的变量，禁止修改`contract`和`clause`中的变量
+  - `if-else`语句 条件判断语句，模式如`if expression { statements }`或`if expression { statements } else { statements }`
 
 合约的基本类型：（`Time`类型暂已停用）
     `Amount Asset Boolean Hash Integer Program PublicKey Signature String`
@@ -124,6 +123,11 @@
 
 ### 编译合约
 调用API接口`compile`编译合约。如果合约`contract`语句上有参数`contract parameters`的话，可以在调用编译合约API接口`compile`的时候加上相关参数进行实例化，这样编译后返回的结果中`program`字段会限定合约的解锁参数，否则返回的`program`仅仅是合约的执行步骤流程，在缺少合约参数的情况下，需要用户自定义相关的合约参数，否则合约锁定的资产会存在泄漏的风险。
+
+合约的基本类型已做简单描述，对应编译合约的API接口`compile`中参数类型只有如下3种：
+  - `boolean` - 布尔类型的合约参数，对应的基本类型是`Boolean`.
+  - `integer` - 整数类型的合约参数，对应的基本类型包括：`Integer`、`Amount`.
+  - `string` - 字符串类型的合约参数，对应的基本类型包括：`String`、`Asset`、`Hash`、`Program`、`PublicKey`.
 
 参数：
 - `String` - *contract*, 合约内容.
