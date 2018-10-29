@@ -16,7 +16,6 @@
   - [第三方信任机构托管合约](#第三方信任机构托管合约)
   - [抵押贷款合约](#抵押贷款合约)
   - [看涨期权合约](#看涨期权合约)
-- [区块链系统模型简介](#区块链系统模型简介)
 
 ## equity合约简介
   `equity`是用于在比原链上表达合约程序而使用的高级语言，主要用于描述比原链上特定的资产： 
@@ -127,9 +126,33 @@
 ----
 
 ### 编译合约
-调用API接口`compile`编译合约。如果合约`contract`语句上有参数`contract parameters`的话，可以在调用编译合约API接口`compile`的时候加上相关参数进行实例化，这样编译后返回的结果中`program`字段会限定合约的解锁参数，否则返回的`program`仅仅是合约的执行步骤流程，在缺少合约参数的情况下，需要用户自定义相关的合约参数，否则合约锁定的资产会存在泄漏的风险。
+编译合约是将合约编译成可执行的虚拟机指令流程。如果合约有参数列表`contract parameters`的话，在锁定合约之前需要对这些合约参数进行实例化，因为这些参数是解锁合约的限制条件。
 
-参数：
+编译合约目前支持两种方式，一种是`equity`编译工具，另一种是调用编译合约的API接口`compile`。其中通过`equity`编译工具的方式如下：
+```
+./equity <contract_file> [flags]
+```
+
+其中`flag`标志如下：
+```
+    --bin        Binary of the contracts in hex.
+    --instance   Object of the Instantiated contracts.
+    --shift      Function shift of the contracts.
+```
+
+以`LockWithPublicKey`为例，编译并实例化合约如下：
+```
+./equity LockWithPublicKey --instance e9108d3ca8049800727f6a3505b3a2710dc579405dde03c250f16d9a7e1e6e78
+```
+
+返回结果如下：
+```
+======= LockWithPublicKey =======
+Instantiated program:
+20e9108d3ca8049800727f6a3505b3a2710dc579405dde03c250f16d9a7e1e6e787403ae7cac00c0
+```
+
+另一种是通过调用编译合约API接口`compile`的方式，其接口参数如下：（新版编译器暂未提交）
 - `String` - *contract*, 合约内容.
 - `Array of Object` - *args*, 合约参数结构体（数组类型）.
   - `Boolean` - *boolean*, 布尔类型的合约参数，对应的基本类型是`Boolean`.
