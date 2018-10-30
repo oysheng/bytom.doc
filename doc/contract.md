@@ -84,7 +84,7 @@
 
 如果合约参数中有`Publickey`和`Signature`(配套使用)，那么获取这些参数需要调用`list-pubkeys`接口获取。`Signature`只能出现在`clause`中，表示该参数仅仅在解锁合约的时候才会被使用，由于目前对交易的签名必须通过`sign-transaction`接口才能获取签名结果，所以解锁的时候只需提供签名的参数`root_xpub`和`derivation_path`即可，需要注意的是这些参数需要跟验证签名`pubkey`匹配起来，否则合约也会执行失败。
 
-其中`list-pubkeys`的参数如下：
+其中[API接口`list-pubkeys`](https://github.com/Bytom/bytom/wiki/API-Reference#list-pubkeys)的参数如下：
 - `String` - *account_id*, 账户ID.
 - `String` - *account_alias*, 账户别名.
 - `String` - *public_key*, 根据指定pubkey来查询.
@@ -130,7 +130,7 @@
 ### 编译合约
 编译合约是将合约编译成可执行的虚拟机指令流程。如果合约有参数列表`contract parameters`的话，在锁定合约之前需要对这些合约参数进行实例化，因为这些参数是解锁合约的限制条件。
 
-编译合约目前支持两种方式，一种是`equity`编译工具，另一种是调用编译合约的API接口`compile`。其中通过`equity`编译工具的方式如下：
+编译合约目前支持两种方式，一种是`equity`编译工具，另一种是调用编译合约的API接口`compile`。其中通过[`equity`编译工具](https://github.com/Bytom/equity)的方式如下：
 ```
 ./equity <contract_file> [flags]
 ```
@@ -154,7 +154,7 @@ Instantiated program:
 20e9108d3ca8049800727f6a3505b3a2710dc579405dde03c250f16d9a7e1e6e787403ae7cac00c0
 ```
 
-另一种是通过调用编译合约API接口`compile`的方式，其接口参数如下：（新版编译器暂未提交）
+另一种是通过调用编译合约[API接口`compile`](https://github.com/Bytom/bytom/wiki/API-Reference#compile)的方式，其接口参数如下：（新版编译器暂未提交）
 - `String` - *contract*, 合约内容.
 - `Array of Object` - *args*, 合约参数结构体（数组类型）.
   - `Boolean` - *boolean*, 布尔类型的合约参数，对应的基本类型是`Boolean`.
@@ -302,7 +302,7 @@ Instantiated program:
 ### 查找合约utxo
 部署合约交易发送成功之后，接下来便需要对合约锁定的资产进行解锁，解锁合约之前需要找到合约的UTXO。
 
-可以通过调用API接口`list-unspent-outputs`来查找，在查合约UTXO的情况下必须将`smart_contract`设置为`true`，否则会查不到，其参数如下：
+可以通过调用[API接口`list-unspent-outputs`](https://github.com/Bytom/bytom/wiki/API-Reference#list-unspent-outputs)来查找，在查合约UTXO的情况下必须将`smart_contract`设置为`true`，否则会查不到，其参数如下：
 - `String` - *id*, UTXO对应的`outputID`，可以根据发布合约交易的输出`action`中的找到.
 - `Boolean` - *smart_contract*, 是否展示合约的UTXO，默认不显示.
 
@@ -328,7 +328,7 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
   "valid_height": 0
 }
 ```
-找到对应的合约UTXO之后，可以通过API接口`decode-program`解析合约的参数信息，用户可以根据已有的参数信息判断该合约能否解锁
+找到对应的合约UTXO之后，可以通过[API接口`decode-program`](https://github.com/Bytom/bytom/wiki/API-Reference#decode-program)解析合约的参数信息，用户可以根据已有的参数信息判断该合约能否解锁
 
 ----
 
@@ -488,8 +488,6 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
 ----
 
 ## 典型合约模板解析
-
-如果合约`contract`有参数的话，在调用编译合约的API接口`compile`的时候需要加上相关参数进行实例化，编译后的返回结果中`program`字段才是需要部署的正常合约程序
 
 ### 单签验证合约
   `LockWithPublicKey`源代码如下：
