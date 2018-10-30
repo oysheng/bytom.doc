@@ -86,6 +86,8 @@
 
 其中`list-pubkeys`的参数如下：
 - `String` - *account_id*, 账户ID.
+- `String` - *account_alias*, 账户别名.
+- `String` - *public_key*, 根据指定pubkey来查询.
 
 其请求和响应的json格式如下：
 ```js
