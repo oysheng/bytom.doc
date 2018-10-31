@@ -40,12 +40,12 @@
 
 ### 语句组成
   `statements` 合约语句（一条或多条），除了`verify`、`lock`和`unlock`基本语句类型之外，目前还新增加了`define`、`assign`和`if-else`扩展语句类型的支持
-  - `verify`语句 验证条件语句，模式如`verify expression`，其中`expression`的结果必须是bool类型，为true才能继续往下执行
-  - `unlock`语句 解锁合约资产语句，模式如`unlock valueAmount of valueAsset`，其中`valueAmount of valueAsset`表示对应的资产值
-  - `lock`语句 锁定合约资产语句，模式如`lock valueAmount of valueAsset with program`，其中`valueAmount of valueAsset`表示对应的资产值，而`program`表示接收对象且必须为Program类型
-  - `define`语句 自定义变量语句，模式如`define identifier := expression`，其中`identifier`表示自定义的变量
-  - `assign`语句 自定义变量赋值语句，模式如`assign identifier = expression`，其中`identifier`必须为`define`语句中用户自定义的变量，禁止修改`contract`和`clause`中的变量
-  - `if-else`语句 条件判断语句，模式如`if expression { statements }`或`if expression { statements } else { statements }`
+  - `verify` 验证条件语句，模式如`verify expression`，其中`expression`的结果必须是bool类型，为true才能继续往下执行
+  - `unlock` 解锁合约资产语句，模式如`unlock valueAmount of valueAsset`，其中`valueAmount of valueAsset`表示对应的资产值
+  - `lock` 锁定合约资产语句，模式如`lock valueAmount of valueAsset with program`，其中`valueAmount of valueAsset`表示对应的资产值，而`program`表示接收对象且必须为`Program`类型
+  - `define` 自定义变量语句，模式如`define identifier := expression`，其中`identifier`表示自定义的变量
+  - `assign` 自定义变量赋值语句，模式如`assign identifier = expression`，其中`identifier`必须为`define`语句中用户自定义的变量，禁止修改`contract`和`clause`中的变量
+  - `if-else` 条件判断语句，模式如`if expression { statements }`或`if expression { statements } else { statements }`
 
 ### 参数类型
   - `Boolean` - 布尔类型，值为`true`或`false`.
