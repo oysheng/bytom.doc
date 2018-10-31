@@ -19,32 +19,44 @@
 
 ## equity合约简介
   `equity`是用于在比原链上表达合约程序而使用的高级语言，主要用于描述比原链上特定的资产： 
-  - 区块链上的所有资产都是锁定在合约`program`中， 资产值`valueAmount of valueAsset`(即`UTXO`）一旦被一个合约解锁`unlock`，仅仅是为了被一个或多个其他合约来进行锁定`lock`
-  - 合约保护资产`valueAmount of valueAsset`(即`UTXO`）的方式是采用执行虚拟机并通过`verify`指令来验证的交易要花费这个资产`value`是否达到了我的条件
+  - 比原链上的所有资产都是锁定在合约`program`中，资产值`valueAmount of valueAsset`(即`UTXO`）一旦被一个合约解锁，仅仅是为了被一个或多个其他合约`program`来进行锁定
+  - 合约保护资产`valueAmount of valueAsset`(即`UTXO`）的方式是只有用户输入正确的解锁脚本`script`（即解锁参数）才能使合约`program`在虚拟机中执行成功
 
 ### 合约组成
   `contract ContractName ( parameters ) locks valueAmount of valueAsset { clauses }`
 
   - `ContractName` 合约名，用户自定义
-  - `parameters` 合约参数列表，其类型名必须符合合约语言的基本类型 
-  - `valueAmount of valueAsset` 资产值（即UTXO的资产类型和对应的值）标识符，用户可以自定义
+  - `parameters` 合约参数列表，其类型名必须是合约语言的基本类型 
+  - `valueAmount` 合约`UTXO`的资产数量，标识符用户可以自定义
+  - `valueAsset` 合约`UTXO`的资产类型，标识符用户可以自定义
   - `clauses` 条款（即函数）列表（一个或多个）
 
-### 条款（函数）组成
+### 条款组成
   `clause ClauseName ( parameters ) { statements }`
 
-  - `ClauseName` 条款/函数名，用户自定义
-  - `parameters` 条款/函数参数列表
+  - `ClauseName` 条款名，用户自定义
+  - `parameters` 条款参数列表
   - `statements` 验证语句           
 
 ### 语句组成
-  statements 合约语句（一条或多条），合约语句除了`verify`、`lock`和`unlock`之外，目前还新增加了`define`、`assign`和`if-else`语句的支持
+  `statements` 合约语句（一条或多条），除了`verify`、`lock`和`unlock`基本语句类型之外，目前还新增加了`define`、`assign`和`if-else`扩展语句类型的支持
   - `verify`语句 验证条件语句，模式如`verify expression`，其中`expression`的结果必须是bool类型，为true才能继续往下执行
   - `unlock`语句 解锁合约资产语句，模式如`unlock valueAmount of valueAsset`，其中`valueAmount of valueAsset`表示对应的资产值
   - `lock`语句 锁定合约资产语句，模式如`lock valueAmount of valueAsset with program`，其中`valueAmount of valueAsset`表示对应的资产值，而`program`表示接收对象且必须为Program类型
   - `define`语句 自定义变量语句，模式如`define identifier := expression`，其中`identifier`表示自定义的变量
   - `assign`语句 自定义变量赋值语句，模式如`assign identifier = expression`，其中`identifier`必须为`define`语句中用户自定义的变量，禁止修改`contract`和`clause`中的变量
   - `if-else`语句 条件判断语句，模式如`if expression { statements }`或`if expression { statements } else { statements }`
+
+### 参数类型
+  - `Boolean` - 布尔类型，值为`true`或`false`.
+  - `Integer` - 整数类型，取值范围为`[-2^63, 2^63-1]`.
+  - `Amount` - 无符号整数类型，取值范围为`[0, 2^63-1]`.
+  - `Asset` - 资产类型，32个字节长度的资产ID.
+  - `Hash` - 哈希类型，32个字节长度的`hash`值.
+  - `PublicKey` - 公钥类型，32个字节长度的`publickey`.
+  - `Signature` - 签名类型，该类型需要根据`publickey`对应的主公钥`root_xpub`和`derivation_path`来构造，且只能用于`clause`的参数列表中.
+  - `Program` - 程序类型，接收`program`，跟地址是一一对应.
+  - `String` - 字符串类型，16进制字符串.
 
 ### 内置函数
   - `abs(n)` 返回数值`n`的绝对值.
@@ -64,25 +76,13 @@
 
 ## 合约交易构造流程
 ### 合约参数构造
-  合约参数主要涉及两个方面，一个是编译合约`contract`中的参数，另一个是解锁合约`clause`中的参数。比原合约的基本类型如下：
-  - `Boolean` - 布尔类型，值为`true`或`false`.
-  - `Integer` - 整数类型，取值范围为`[-2^63, 2^63-1]`.
-  - `Amount` - 无符号整数类型，取值范围为`[0, 2^63-1]`.
-  - `Asset` - 资产类型，32个字节长度的资产ID.
-  - `Hash` - 哈希类型，32个字节长度的`hash`值.
-  - `PublicKey` - 公钥类型，32个字节长度的`publickey`.
-  - `Signature` - 签名类型，该类型需要根据`publickey`对应的主公钥`root_xpub`和`derivation_path`来构造，且只能用于`clause`的参数列表中.
-  - `Program` - 程序类型，接收`program`，跟地址是一一对应.
-  - `String` - 字符串类型，16进制字符串.
+  合约参数主要包括两个方面，一个是编译合约`contract`中的参数，另一个是解锁合约`clause`中的参数。使用参数需要注意的相关事项如下：
+  - 调用编译合约API接口`compile`的时候加上参数是将合约实例化，按照`contract`中的参数列表顺序添加即可
+  - 构造解锁合约交易需要添加`clause`中的参数列表
+  - `Signature`类型只能在`clause`的参数列表中出现，不允许出现在`contract`的参数列表中
+  - 如果合约包含多个`clause`，那么用户只需选择一个`clause`来解锁就可以了。在构造解锁合约的交易过程中，需要添加额外的参`clause_selector`（无符号整数类型，小端存储格式），`clause_selector`是根据合约`clause`的顺序来指定的，假如`clause`的个数`n`，那么选择对应的`clause_selector`为`0 ~ n-1`，即第一个`clause`的`clause_selector`为`0`，第二个`clause`的`clause_selector`为`1`，以此类推。
 
-注意事项：
-  - 编译合约API接口`compile`只需要使用`contract`中的参数
-  - 解锁合约只需要提供`clause`中的参数
-  - `Signature`类型只能在`clause`的参数列表中出现，不能出现在编译合约的API中
-  - 所有`string`类型的字符串都是必须以十六进制字节的`string`形式出现，否则调用编译合约API的时候会报错
-  - 如果合约包含多个`clause`，那么用户需要选择一个`clause`来解锁，在解锁合约的交易过程中需要构造参数`clause_selector`（无符号整数类型，小端存储格式）。`clause_selector`是根据合约`clause`的顺序来指定的，假如`clause`的个数`n`，那么选择对应的`clause_selector`为`0 ~ n-1`，即第一个`clause`的`clause_selector`为`0`，第二个`clause`的`clause_selector`为`1`，以此类推。
-
-如果合约参数中有`Publickey`和`Signature`(配套使用)，那么获取这些参数需要调用`list-pubkeys`接口获取。`Signature`只能出现在`clause`中，表示该参数仅仅在解锁合约的时候才会被使用，由于目前对交易的签名必须通过`sign-transaction`接口才能获取签名结果，所以解锁的时候只需提供签名的参数`root_xpub`和`derivation_path`即可，需要注意的是这些参数需要跟验证签名`pubkey`匹配起来，否则合约也会执行失败。
+如果合约的`clause`参数列表中包含`Signature`，那么在构造解锁合约交易的时候需要提供签名的参数`root_xpub`和`derivation_path`，这样在交易签名阶段便可以获取到正确的签名结果，因为签名不能直接获取，必须通过调用`sign-transaction`API接口才能得到。参数`root_xpub`和`derivation_path`是通过调用`list-pubkeys`接口获取的，此外`Signature`一般需要跟`PublicKey`配套使用，即参数`root_xpub`和`derivation_path`需要跟公钥`pubkey`一一对应，否则合约会执行失败。
 
 其中[API接口`list-pubkeys`](https://github.com/Bytom/bytom/wiki/API-Reference#list-pubkeys)的参数如下：
 - `String` - *account_id*, 账户ID.
