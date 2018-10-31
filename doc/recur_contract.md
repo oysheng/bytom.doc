@@ -397,7 +397,7 @@ contract PartLoanCollateral(assetLoaned: Asset,
     }
     ```
 
-    其对应的解锁合约交易模板示例如下:
+    对应的解锁合约交易模板示例如下:
     ```js
     // clause default
     {
