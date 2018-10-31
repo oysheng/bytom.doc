@@ -19,8 +19,8 @@
 
 ## equity合约简介
   `equity`是用于在比原链上表达合约程序而使用的高级语言，主要用于描述比原链上特定的资产： 
-  - 比原链上的所有资产都是锁定在合约`program`中，资产值`valueAmount of valueAsset`(即`UTXO`）一旦被一个合约解锁，仅仅是为了被一个或多个其他合约`program`来进行锁定
-  - 合约保护资产`valueAmount of valueAsset`(即`UTXO`）的方式是只有用户输入正确的解锁脚本`script`（即解锁参数）才能使合约`program`在虚拟机中执行成功
+  - 比原链上的所有资产都是锁定在合约`program`中，资产值`valueAmount of valueAsset`(即`UTXO`）一旦被一个合约解锁，仅仅是为了被一个或多个其他合约来进行锁定
+  - 合约保护资产`valueAmount of valueAsset`的方式是只有用户输入正确的解锁参数才能使合约程序在虚拟机中执行成功
 
 ### 合约组成
   `contract ContractName ( parameters ) locks valueAmount of valueAsset { clauses }`
@@ -29,17 +29,17 @@
   - `parameters` 合约参数列表，其类型名必须是合约语言的基本类型 
   - `valueAmount` 合约`UTXO`的资产数量，标识符用户可以自定义
   - `valueAsset` 合约`UTXO`的资产类型，标识符用户可以自定义
-  - `clauses` 条款（即函数）列表（一个或多个）
+  - `clauses` 条款（即函数）列表
 
 ### 条款组成
   `clause ClauseName ( parameters ) { statements }`
 
   - `ClauseName` 条款名，用户自定义
   - `parameters` 条款参数列表
-  - `statements` 验证语句           
+  - `statements` 合约语句列表           
 
 ### 语句组成
-  `statements` 合约语句（一条或多条），除了`verify`、`lock`和`unlock`基本语句类型之外，目前还新增加了`define`、`assign`和`if-else`扩展语句类型的支持
+  `statement` 合约语句，除了`verify`、`lock`和`unlock`基本语句类型之外，目前还新增加了`define`、`assign`和`if-else`扩展语句类型的支持
   - `verify` 验证条件语句，模式如`verify expression`，其中`expression`的结果必须是bool类型，为true才能继续往下执行
   - `unlock` 解锁合约资产语句，模式如`unlock valueAmount of valueAsset`，其中`valueAmount of valueAsset`表示对应的资产值
   - `lock` 锁定合约资产语句，模式如`lock valueAmount of valueAsset with program`，其中`valueAmount of valueAsset`表示对应的资产值，而`program`表示接收对象且必须为`Program`类型
@@ -48,15 +48,15 @@
   - `if-else` 条件判断语句，模式如`if expression { statements }`或`if expression { statements } else { statements }`
 
 ### 参数类型
-  - `Boolean` - 布尔类型，值为`true`或`false`.
-  - `Integer` - 整数类型，取值范围为`[-2^63, 2^63-1]`.
-  - `Amount` - 无符号整数类型，取值范围为`[0, 2^63-1]`.
-  - `Asset` - 资产类型，32个字节长度的资产ID.
-  - `Hash` - 哈希类型，32个字节长度的`hash`值.
-  - `PublicKey` - 公钥类型，32个字节长度的`publickey`.
-  - `Signature` - 签名类型，该类型需要根据`publickey`对应的主公钥`root_xpub`和`derivation_path`来构造，且只能用于`clause`的参数列表中.
-  - `Program` - 程序类型，接收`program`，跟地址是一一对应.
-  - `String` - 字符串类型，16进制字符串.
+  - `Boolean` 布尔类型，值为`true`或`false`.
+  - `Integer` 整数类型，取值范围为`[-2^63, 2^63-1]`.
+  - `Amount` 无符号整数类型，取值范围为`[0, 2^63-1]`.
+  - `Asset` 资产类型，32个字节长度的资产ID.
+  - `Hash` 哈希类型，32个字节长度的`hash`值.
+  - `PublicKey` 公钥类型，32个字节长度的`publickey`.
+  - `Signature` 签名类型，该类型需要根据`publickey`对应的主公钥`root_xpub`和`derivation_path`来构造，且只能用于`clause`的参数列表中.
+  - `Program` 程序类型，接收`program`，跟地址是一一对应.
+  - `String` 字符串类型，16进制字符串.
 
 ### 内置函数
   - `abs(n)` 返回数值`n`的绝对值.
