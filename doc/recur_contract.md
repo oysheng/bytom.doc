@@ -274,60 +274,115 @@ contract PartLoanCollateral(assetLoaned: Asset,
     &nbsp;
     对应的解锁合约交易模板示例如下：
     ```js
+    // clause repay
     {
-    "base_transaction": null,
-    "actions": [
+      "base_transaction": null,
+      "actions": [
         {
-        "output_id": "a80552a346e271aaa7c71d0fa362a6b02aa844bb71a72934db64bc2b9906d0b9",
-        "arguments": [
+          "output_id": "a80552a346e271aaa7c71d0fa362a6b02aa844bb71a72934db64bc2b9906d0b9",
+          "arguments": [
             {
-            "type": "integer",
-            "raw_data": {
+              "type": "integer",
+              "raw_data": {
                 "value": 2000
-            }
+              }
             },
             {
-            "type": "integer",
-            "raw_data": {
+              "type": "integer",
+              "raw_data": {
                 "value": 0
+              }
             }
-            }
-        ],
-        "type": "spend_account_unspent_output"
+          ],
+          "type": "spend_account_unspent_output"
         },
         {
-        "amount": 2000,
-        "asset_id": "c6b12af8326df37b8d77c77bfa2547e083cbacde15cc48da56d4aa4e4235a3ee",
-        "control_program": "0014dedfd406c591aa221a047a260107f877da92fec5",
-        "type": "control_program"
+          "amount": 2000,
+          "asset_id": "c6b12af8326df37b8d77c77bfa2547e083cbacde15cc48da56d4aa4e4235a3ee",
+          "control_program": "0014dedfd406c591aa221a047a260107f877da92fec5",
+          "type": "control_program"
         },
         {
-        "amount": 750,
-        "asset_id": "2a62180553e70131f668639116d6d1e29417537766b5244cbe49fa6b36c5d7b0",
-        "control_program": "0014bf54f5adbbd2dc11bffb50277b5a993cec75e924",
-        "type": "control_program"
+          "amount": 750,
+          "asset_id": "2a62180553e70131f668639116d6d1e29417537766b5244cbe49fa6b36c5d7b0",
+          "control_program": "0014bf54f5adbbd2dc11bffb50277b5a993cec75e924",
+          "type": "control_program"
         },
         {
-        "amount": 2250,
-        "asset_id": "2a62180553e70131f668639116d6d1e29417537766b5244cbe49fa6b36c5d7b0",
-        "control_program": "160014bf54f5adbbd2dc11bffb50277b5a993cec75e924160014dedfd406c591aa221a047a260107f877da92fec5026c0702701720c6b12af8326df37b8d77c77bfa2547e083cbacde15cc48da56d4aa4e4235a3ee4c83567a6477000000567900a0577954799f9a916164630000000057795379515879c16951c3587995547996c2515979c16952c3767c59799555799694c251005a798959798958798957795c7994895679895579890274787e008901c07ec16963720000000070515879c16951c3c2515979c1696383000000537acd9f6900c3c251577ac1747800c0",
-        "type": "control_program"
+          "amount": 2250,
+          "asset_id": "2a62180553e70131f668639116d6d1e29417537766b5244cbe49fa6b36c5d7b0",
+          "control_program": "160014bf54f5adbbd2dc11bffb50277b5a993cec75e924160014dedfd406c591aa221a047a260107f877da92fec5026c0702701720c6b12af8326df37b8d77c77bfa2547e083cbacde15cc48da56d4aa4e4235a3ee4c83567a6477000000567900a0577954799f9a916164630000000057795379515879c16951c3587995547996c2515979c16952c3767c59799555799694c251005a798959798958798957795c7994895679895579890274787e008901c07ec16963720000000070515879c16951c3c2515979c1696383000000537acd9f6900c3c251577ac1747800c0",
+          "type": "control_program"
         },
         {
-        "account_id": "0JPC5DBOG0A02",
-        "amount": 2000,
-        "asset_id": "c6b12af8326df37b8d77c77bfa2547e083cbacde15cc48da56d4aa4e4235a3ee",
-        "type": "spend_account"
+          "account_id": "0JPC5DBOG0A02",
+          "amount": 2000,
+          "asset_id": "c6b12af8326df37b8d77c77bfa2547e083cbacde15cc48da56d4aa4e4235a3ee",
+          "type": "spend_account"
         },
         {
-        "account_id": "0JQS94GAG0A02",
-        "amount": 20000000,
-        "asset_id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-        "type": "spend_account"
+          "account_id": "0JPC5DBOG0A02",
+          "amount": 20000000,
+          "asset_id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "type": "spend_account"
         }
-    ],
-    "ttl": 0,
-    "time_range": 1521625823
+      ],
+      "ttl": 0,
+      "time_range": 1521625823
+    }
+    ```
+
+    当`amountPartLoaned`大于或等于`amountLoaned`的值8000时，执行的流程是`else`语句下面合约流程。对应的解锁合约交易模板示例如下：
+    ```js
+    // clause repay
+    {
+      "base_transaction": null,
+      "actions": [
+        {
+          "output_id": "a80552a346e271aaa7c71d0fa362a6b02aa844bb71a72934db64bc2b9906d0b9",
+          "arguments": [
+            {
+              "type": "integer",
+              "raw_data": {
+                "value": 8000
+              }
+            },
+            {
+              "type": "integer",
+              "raw_data": {
+                "value": 0
+              }
+            }
+          ],
+          "type": "spend_account_unspent_output"
+        },
+        {
+          "amount": 8000,
+          "asset_id": "c6b12af8326df37b8d77c77bfa2547e083cbacde15cc48da56d4aa4e4235a3ee",
+          "control_program": "0014dedfd406c591aa221a047a260107f877da92fec5",
+          "type": "control_program"
+        },
+        {
+          "amount": 3000,
+          "asset_id": "2a62180553e70131f668639116d6d1e29417537766b5244cbe49fa6b36c5d7b0",
+          "control_program": "0014bf54f5adbbd2dc11bffb50277b5a993cec75e924",
+          "type": "control_program"
+        },
+        {
+          "account_id": "0JPC5DBOG0A02",
+          "amount": 8000,
+          "asset_id": "c6b12af8326df37b8d77c77bfa2547e083cbacde15cc48da56d4aa4e4235a3ee",
+          "type": "spend_account"
+        },
+        {
+          "account_id": "0JPC5DBOG0A02",
+          "amount": 20000000,
+          "asset_id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "type": "spend_account"
+        }
+      ],
+      "ttl": 0,
+      "time_range": 1521625823
     }
     ```
 
