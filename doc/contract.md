@@ -76,13 +76,13 @@
 
 ## 合约交易构造流程
 ### 合约参数构造
-  合约参数主要包括两个方面，一个是编译合约`contract`中的参数，另一个是解锁合约`clause`中的参数。使用参数需要注意的相关事项如下：
-  - 调用编译合约API接口`compile`的时候加上参数是将合约实例化，按照`contract`中的参数列表顺序添加即可
+合约参数主要包括两个方面，一个是编译合约`contract`中的参数，另一个是解锁合约`clause`中的参数。其中参数的相关注意事项如下：
+  - 调用编译合约API接口`compile`不加参数是直接编译合约，按照`contract`中的参数列表顺序加上参数是将合约实例化
   - 构造解锁合约交易需要添加`clause`中的参数列表
-  - `Signature`类型只能在`clause`的参数列表中出现，不允许出现在`contract`的参数列表中
-  - 如果合约包含多个`clause`，那么用户只需选择一个`clause`来解锁就可以了。在构造解锁合约的交易过程中，需要添加额外的参`clause_selector`（无符号整数类型，小端存储格式），`clause_selector`是根据合约`clause`的顺序来指定的，假如`clause`的个数`n`，那么选择对应的`clause_selector`为`0 ~ n-1`，即第一个`clause`的`clause_selector`为`0`，第二个`clause`的`clause_selector`为`1`，以此类推。
+  - `Signature`参数类型只能在`clause`的参数列表中出现，不允许出现在`contract`的参数列表中
+  - 如果合约包含多个`clause`，那么用户只需选择任意一个`clause`来解锁就可以了。在构造解锁合约的交易过程中，需要添加额外的参数`clause_selector`（无符号整数类型，小端存储格式），`clause_selector`是根据合约`clause`的顺序来指定的，假如`clause`的个数`n`，那么选择对应的`clause_selector`为`0 ~ n-1`，即第一个`clause`的`clause_selector`为`0`，第二个`clause`的`clause_selector`为`1`，以此类推。
 
-如果合约的`clause`参数列表中包含`Signature`，那么在构造解锁合约交易的时候需要提供签名的参数`root_xpub`和`derivation_path`，这样在交易签名阶段便可以获取到正确的签名结果，因为签名不能直接获取，必须通过调用`sign-transaction`API接口才能得到。参数`root_xpub`和`derivation_path`是通过调用`list-pubkeys`接口获取的，此外`Signature`一般需要跟`PublicKey`配套使用，即参数`root_xpub`和`derivation_path`需要跟公钥`pubkey`一一对应，否则合约会执行失败。
+如果合约的`clause`参数列表中包含`Signature`，那么在构造解锁合约交易的时候需要通过签名的必要条件`root_xpub`和`derivation_path`来间接获得，因为签名必须通过调用`sign-transaction`API接口才能得到。参数`root_xpub`和`derivation_path`是通过调用`list-pubkeys`接口获取的，此外`Signature`一般需要跟`PublicKey`配套使用，即参数`root_xpub`和`derivation_path`需要跟公钥`pubkey`一一对应，否则合约会执行失败。
 
 其中[API接口`list-pubkeys`](https://github.com/Bytom/bytom/wiki/API-Reference#list-pubkeys)的参数如下：
 - `String` - *account_id*, 账户ID.
@@ -130,7 +130,7 @@
 ### 编译合约
 编译合约是将合约编译成可执行的虚拟机指令流程。如果合约有参数列表`contract parameters`的话，在锁定合约之前需要对这些合约参数进行实例化，因为这些参数是解锁合约的限制条件。
 
-编译合约目前支持两种方式，一种是`equity`编译工具，另一种是调用编译合约的API接口`compile`。其中通过[`equity`编译工具](https://github.com/Bytom/equity)的方式如下：
+编译合约目前支持两种方式，一种是使用`equity`编译工具，另一种是调用编译合约的API接口`compile`。其中通过[`equity`编译工具](https://github.com/Bytom/equity)的方式如下：
 ```
 ./equity <contract_file> [flags]
 ```
@@ -211,7 +211,7 @@ Instantiated program:
 ----
 
 ### 锁定合约
-`lock`（锁定）合约，即部署合约，其本质是调用`build-transaction`接口将资产发送到合约特定的`program`，只需将接收方`control_program`设置为指定合约即可，构造锁定合约交易的模板如下：（注意：合约交易暂时不支持接收方资产为BTM资产的交易）
+`lock`锁定合约，即部署合约，其本质是调用`build-transaction`接口将资产发送到合约特定的`program`，只需将接收方`control_program`设置为指定合约即可，构造锁定合约交易的模板如下：（注意：合约交易暂时不支持接收方资产为BTM资产的交易）
 ```js
 // Request
 {
@@ -295,11 +295,11 @@ Instantiated program:
 }
 ```
 
-构建交易成功之后，便可以对交易进行签名`sign-transaction`（签名成功的标志是返回结果`signing_instructions`中所有包含签名类型的`signatures`字段有值且个数与`quorum`的值相等），然后提交交易`submit-transaction`到交易池中，等待交易被打包上链
+构建交易成功之后，便可以对交易进行签名`sign-transaction`，返回结果中`sign_complete`为`true`表示签名成功，将签名的交易通过`submit-transaction`提交到交易池中，等待交易被打包上链
 
 ----
 
-### 查找合约utxo
+### 查找合约UTXO
 部署合约交易发送成功之后，接下来便需要对合约锁定的资产进行解锁，解锁合约之前需要找到合约的UTXO。
 
 可以通过调用[API接口`list-unspent-outputs`](https://github.com/Bytom/bytom/wiki/API-Reference#list-unspent-outputs)来查找，在查合约UTXO的情况下必须将`smart_contract`设置为`true`，否则会查不到，其参数如下：
@@ -333,7 +333,7 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
 ----
 
 ### 解锁合约
-`unlock`（解锁）合约，即调用合约，其本质是通过给交易添加相应的合约参数以便合约程序`program`在虚拟机中执行成功，目前合约相关的参数都可以通过`build-transaction`中的`Action`结构`spend_account_unspent_output`中的数组参数`arguments`进行添加，其中参数如下：
+`unlock`解锁合约，即调用合约，其本质是通过给交易添加相应的合约参数以便合约程序`program`在虚拟机中执行成功，目前合约相关的参数都可以通过`build-transaction`中的`Action`结构`spend_account_unspent_output`中的数组参数`arguments`进行添加，其中参数如下：
 
 1） `RawTxSigArgument` 签名相关的参数，`type`类型为`raw_tx_signature`，主要包含主公钥`xpub`和其对应的派生路径`derivation_path`，而待验证的`publickey`是通过该主公钥和派生路径生成的子公钥生成的（这些参数可以通过API接口`list-pubkeys`获取）
   - `xpub` 主公钥
@@ -483,7 +483,7 @@ curl -X POST list-unspent-outputs -d '{"id": "413d941faf5a19501ab4c06747fe1eb38c
 }
 ```
 
-构建交易成功之后，便可以对交易进行签名`sign-transaction`（签名成功的标志是返回结果`signing_instructions`中所有包含签名类型的`signatures`字段有值且个数与`quorum`的值相等），然后提交交易`submit-transaction`到交易池中，等待交易被打包上链
+构建交易成功之后，便可以对交易进行签名`sign-transaction`，返回结果中`sign_complete`为`true`表示签名成功，将签名的交易通过`submit-transaction`提交到交易池中，等待交易被打包上链
 
 ----
 
