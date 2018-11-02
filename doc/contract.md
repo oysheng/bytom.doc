@@ -82,27 +82,27 @@
 
   * `verify` 验证条件语句，用来验证表达式的结果是否为真，模式如下:
       
-      &nbsp;
-      `verify expression`
-  
-      &nbsp;
-      其中`expression`的结果必须是`bool`类型，`expression`表达式的结果必须为`true`时表示验证成功。示例如下：
-        - `verify above(blockNumber)` 检测当前块的区块高度是否高于 `blockNumber`。
-        - `verify checkTxSig(key, sig)` 检测给定的签名是否与预先设定的公钥相匹配。
-        - `verify newBid > currentBid` 检测`newBid`是否大于`currentBid`。
+    &nbsp;
+    `verify expression`
+
+    &nbsp;
+    其中`expression`的结果必须是`bool`类型，`expression`表达式的结果必须为`true`时表示验证成功。示例如下：
+      - `verify above(blockNumber)` 检测当前块的区块高度是否高于 `blockNumber`。
+      - `verify checkTxSig(key, sig)` 检测给定的签名是否与预先设定的公钥相匹配。
+      - `verify newBid > currentBid` 检测`newBid`是否大于`currentBid`。
   &nbsp;
   * `lock` 锁定合约资产语句，模式如下：
   
-      &nbsp;
-      `lock valueAmount of valueAsset with program`
-      
-      &nbsp;
-      其中`valueAmount`表示资产数量，`valueAsset`表示资产类型，而`program`表示接收对象且必须为`Program`类型。
+    &nbsp;
+    `lock valueAmount of valueAsset with program`
+    
+    &nbsp;
+    其中`valueAmount`表示资产数量，`valueAsset`表示资产类型，而`program`表示接收对象且必须为`Program`类型。
   &nbsp;
   * `unlock` 解锁合约资产语句，模式如下：
-  
-      &nbsp;
-      `unlock valueAmount of valueAsset`
+
+    &nbsp;
+    `unlock valueAmount of valueAsset`
 
     &nbsp;  
     其中`valueAmount`表示资产数量，`valueAsset`表示资产类型，`unlock`语句表示解锁的资产可以指定给任意接收对象。
