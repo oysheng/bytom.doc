@@ -227,9 +227,9 @@ func BuildTx(inputs []InputAndSigInst, outputs []*types.TxOutput) (*Template, *t
 	tx.Outputs = append(tx.Outputs, outputs...)
 
 	// Add all the built inputs and their corresponding signing instructions.
-	for _, in := range inputs {
+	for p, in := range inputs {
 		// Empty signature arrays should be serialized as empty arrays, not null.
-		in.sigInst.Position = uint32(len(inputs))
+		in.sigInst.Position = uint32(p)
 		if in.sigInst.WitnessComponents == nil {
 			in.sigInst.WitnessComponents = []witnessComponent{}
 		}
