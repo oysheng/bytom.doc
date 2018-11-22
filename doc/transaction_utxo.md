@@ -252,9 +252,9 @@ func Sign(tpl *Template, xprv chainkd.XPrv) error {
 		sig := xprv.Sign(h[:])
 		rawTxSig := &RawTxSigWitness{
 			Quorum: 1,
-			Sigs:   []json.HexBytes{sig},
+			Sigs:   []chainjson.HexBytes{sig},
 		}
-		sigInst.WitnessComponents = append([]witnessComponent(rawTxSig), sigInst.WitnessComponents...)
+		sigInst.WitnessComponents = append(sigInst.WitnessComponents, rawTxSig)
 	}
 	return materializeWitnesses(tpl)
 }
