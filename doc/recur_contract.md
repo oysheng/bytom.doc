@@ -89,57 +89,57 @@ contract PriceChanger(askAmount: Amount, askAsset: Asset, sellerKey: PublicKey, 
     ```js
     // clause changePrice
     {
-    "base_transaction": null,
-    "actions": [
+      "base_transaction": null,
+      "actions": [
         {
-        "output_id": "31feac2f482f48dd99117569a3148d1b84211d41b64a980dc9ec37bda922b0c8",
-        "arguments": [
+          "output_id": "31feac2f482f48dd99117569a3148d1b84211d41b64a980dc9ec37bda922b0c8",
+          "arguments": [
             {
-            "type": "integer",
-            "raw_data": {
+              "type": "integer",
+              "raw_data": {
                 "value": 10000
-            }
+              }
             },
             {
-            "type": "data",
-            "raw_data": {
+              "type": "data",
+              "raw_data": {
                 "value": "3addca837514d599c509aed802c0b7671838b363a298cbcb0acb06bc24076cf4"
-            }
+              }
             },
             {
-            "type": "raw_tx_signature",
-            "raw_data": {
+              "type": "raw_tx_signature",
+              "raw_data": {
                 "xpub": "a4d4f09a04371516d37e1d27f92c9cb41e4b1e7f62762cf23ed3904a9dfd2d794195862fffd00bf7ac373e5891c8d2eb660dc5ff9c040ec4e01f973bbfd31c23",
                 "derivation_path": [
-                "010100000000000000",
-                "0100000000000000"
+                  "010100000000000000",
+                  "0100000000000000"
                 ]
-            }
+              }
             },
             {
-            "type": "integer",
-            "raw_data": {
+              "type": "integer",
+              "raw_data": {
                 "value": 0
+              }
             }
-            }
-        ],
-        "type": "spend_account_unspent_output"
+          ],
+          "type": "spend_account_unspent_output"
         },
         {
-        "amount": 900,
-        "asset_id": "2a62180553e70131f668639116d6d1e29417537766b5244cbe49fa6b36c5d7b0",
-        "control_program": "160014dedfd406c591aa221a047a260107f877da92fec520055539eb36abcaaf127c63ae20e3d049cd28d0f1fe569df84da3aedb018ca1bf203addca837514d599c509aed802c0b7671838b363a298cbcb0acb06bc24076cf40210273a557a6432000000557a5479ae7cac6900c3c25100597a89587a89587a89587a89557a890274787e008901c07ec1633a000000007b537a51567ac1747800c0",
-        "type": "control_program"
+          "amount": 900,
+          "asset_id": "2a62180553e70131f668639116d6d1e29417537766b5244cbe49fa6b36c5d7b0",
+          "control_program": "160014dedfd406c591aa221a047a260107f877da92fec520055539eb36abcaaf127c63ae20e3d049cd28d0f1fe569df84da3aedb018ca1bf203addca837514d599c509aed802c0b7671838b363a298cbcb0acb06bc24076cf40210273a557a6432000000557a5479ae7cac6900c3c25100597a89587a89587a89587a89557a890274787e008901c07ec1633a000000007b537a51567ac1747800c0",
+          "type": "control_program"
         },
         {
-        "account_id": "0ILGLSTC00A02",
-        "amount": 20000000,
-        "asset_id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-        "type": "spend_account"
+          "account_id": "0ILGLSTC00A02",
+          "amount": 20000000,
+          "asset_id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "type": "spend_account"
         }
-    ],
-    "ttl": 0,
-    "time_range": 1521625823
+      ],
+      "ttl": 0,
+      "time_range": 1521625823
     }
     ```
 
