@@ -509,7 +509,7 @@ type Template struct {
 
 ### 估算手续费
 
-估算手续费接口`estimate-transaction-gas`是对`build-transaction`的结果进行手续费的预估，估算的结果需要重新加到`build-transaction`的结果中，然后对交易进行签名和提交。其主要流程如下：
+估算手续费接口`estimate-transaction-gas`是对`build-transaction`的结果进行手续费的预估，估算的总手续费`total_neu`需要加到`build-transaction`的请求结构中，然后对交易进行签名和提交。其主要流程如下：
 ```
   build - estimate - build - sign - submit
 ```
