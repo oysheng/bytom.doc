@@ -51,11 +51,11 @@ func (m *Manager) createP2PKH(xpub chainkd.XPub) (*CtrlProgram, error) {
 }
 ```
 
-创建多签地址参考代码[account/accounts.go#L294](https://github.com/Bytom/bytom/blob/master/account/accounts.go#L294)进行相应改造为：
+创建多签地址参考代码[account/accounts.go#L294](https://github.com/Bytom/bytom/blob/master/account/accounts.go#L294)进行相应改造为：(quorum指的是多签地址需要的验证的个数，比如说3-2多签地址，指的是3个主公钥，需要两个签名才能验证通过)
 ```go
-func (m *Manager) createP2SH(xpubs []chainkd.XPub) (*CtrlProgram, error) {
+func (m *Manager) createP2SH(xpubs []chainkd.XPub, quorum int) (*CtrlProgram, error) {
 	derivedPKs := chainkd.XPubKeys(xpubs)
-	signScript, err := vmutil.P2SPMultiSigProgram(derivedPKs, len(derivedPKs))
+	signScript, err := vmutil.P2SPMultiSigProgram(derivedPKs, quorum)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +158,7 @@ utxo跟get-block返回结果的字段对应关系如下：
 第一步，通过`utxo`构造交易输入`TxInput`和签名需要的数据信息`SigningInstruction`，该部分功能可以参考代码[account/builder.go#L169](https://github.com/Bytom/bytom/blob/master/account/builder.go#L169)进行相应改造为:
 ```go
 // UtxoToInputs convert an utxo to the txinput
-func UtxoToInputs(xpubs []chainkd.XPub, u *UTXO) (*types.TxInput, *txbuilder.SigningInstruction, error) {
+func UtxoToInputs(xpubs []chainkd.XPub, quorum int， u *UTXO) (*types.TxInput, *txbuilder.SigningInstruction, error) {
 	txInput := types.NewSpendInput(nil, u.SourceID, u.AssetID, u.Amount, u.SourcePos, u.ControlProgram)
 	sigInst := &txbuilder.SigningInstruction{}
 
@@ -171,6 +171,7 @@ func UtxoToInputs(xpubs []chainkd.XPub, u *UTXO) (*types.TxInput, *txbuilder.Sig
 		return nil, nil, err
 	}
 
+    sigInst.AddRawWitnessKeys(xpubs, nil, quorum)
 	switch address.(type) {
 	case *common.AddressWitnessPubKeyHash:
 		derivedPK := xpubs[0].PublicKey()
@@ -178,7 +179,7 @@ func UtxoToInputs(xpubs []chainkd.XPub, u *UTXO) (*types.TxInput, *txbuilder.Sig
 
 	case *common.AddressWitnessScriptHash:
 		derivedPKs := chainkd.XPubKeys(xpubs)
-		script, err := vmutil.P2SPMultiSigProgram(derivedPKs, len(derivedPKs))
+		script, err := vmutil.P2SPMultiSigProgram(derivedPKs, quorum)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -255,6 +256,30 @@ func Sign(tpl *Template, xprv chainkd.XPrv) error {
 			Sigs:   []chainjson.HexBytes{sig},
 		}
 		sigInst.WitnessComponents = append(sigInst.WitnessComponents, rawTxSig)
+	}
+	return materializeWitnesses(tpl)
+}
+```
+
+多签的方式可以参考以下修改：（xprvs需要跟）
+```go
+func Sign(tpl *Template, xprvs []chainkd.XPrv) error {
+	for i, sigInst := range tpl.SigningInstructions {
+		for _, wc := range sigInst.WitnessComponents {
+			switch sw := wc.(type) {
+			case *RawTxSigWitness:
+				h := tpl.Hash(uint32(i)).Byte32()
+				for k, xprv := range xprvs {
+					if len(sw.Sigs[k]) > 0 {
+						// Already have a signature for this key
+						continue
+					}
+					sig := xprv.Sign(h[:])
+					sw.Sigs[k] = sig
+					break  // the one private sign this tx only once
+				}
+			}
+		}
 	}
 	return materializeWitnesses(tpl)
 }
