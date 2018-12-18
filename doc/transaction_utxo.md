@@ -261,7 +261,7 @@ func Sign(tpl *Template, xprv chainkd.XPrv) error {
 }
 ```
 
-多签的方式可以参考以下修改：（xprvs需要跟）
+多签的方式可以参考以下修改：（xprvs需要跟签名的个数Quorum相同，另外注意一下多签的顺序）
 ```go
 func Sign(tpl *Template, xprvs []chainkd.XPrv) error {
 	for i, sigInst := range tpl.SigningInstructions {
