@@ -249,13 +249,14 @@ func BuildTx(inputs []InputAndSigInst, outputs []*types.TxOutput) (*Template, *t
 // Sign will try to sign all the witness
 func Sign(tpl *Template, xprv chainkd.XPrv) error {
 	for i, sigInst := range tpl.SigningInstructions {
-		h := tpl.Hash(uint32(i)).Byte32()
-		sig := xprv.Sign(h[:])
-		rawTxSig := &RawTxSigWitness{
-			Quorum: 1,
-			Sigs:   []chainjson.HexBytes{sig},
+		for _, wc := range sigInst.WitnessComponents {
+			switch sw := wc.(type) {
+			case *RawTxSigWitness:
+				h := tpl.Hash(uint32(i)).Byte32()
+				sig := xprv.Sign(h[:])
+				sw.Sigs = append(sw.Sigs, sig)
+			}
 		}
-		sigInst.WitnessComponents = append(sigInst.WitnessComponents, rawTxSig)
 	}
 	return materializeWitnesses(tpl)
 }
