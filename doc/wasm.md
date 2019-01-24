@@ -318,3 +318,75 @@ create pubkey.
   ]
 }
 ```
+
+----
+
+## `convertArgument`
+
+convert argument.
+
+### Parameters
+
+`Object`:
+
+- `Obejct Array`
+  - `String` - *type*, type.
+  - `String` - *value*, value.
+
+### Returns
+
+`Object`:
+
+- `Obejct Array`
+  - `String` - *type*, data type.
+  - `String` - *value*, value.
+
+```js
+// Request
+[
+  {
+    "type": "data",
+    "value": "ba5a63e7416caeb945eefc2ce874f40bc4aaf6005a1fc792557e41046f7e502f"
+  },
+  {
+    "type": "integer",
+    "value": 100
+  },
+  {
+    "type": "string",
+    "value": "string"
+  },
+  {
+    "type": "boolean",
+    "value": true
+  },
+  {
+    "type": "address",
+    "value": "bm1q5u8u4eldhjf3lvnkmyl78jj8a75neuryzlknk0"
+  }
+]
+
+// Result
+[
+  {
+    "type": "data",
+    "value": "ba5a63e7416caeb945eefc2ce874f40bc4aaf6005a1fc792557e41046f7e502f"
+  },
+  {
+    "type": "data",
+    "value": "64"
+  },
+  {
+    "type": "data",
+    "value": "737472696e67"
+  },
+  {
+    "type": "data",
+    "value": "01"
+  },
+  {
+    "type": "data",
+    "value": "0014a70fcae7edbc931fb276d93fe3ca47efa93cf064"
+  }
+]
+```
