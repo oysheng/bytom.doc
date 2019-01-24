@@ -214,7 +214,7 @@ sign transaction.
 
 - `String` - *raw_transaction*, raw transaction.
 - `Object` - *signing_instructions*, sign array.
-  - `String` - *derivation_path*, derivation path array.
+  - `Object` - *derivation_path*, derivation path array.
   - `Object` - *sign_data*, sign data array.
 - `Object` - *key*, encrypted key json, get by web database.
 
@@ -273,6 +273,48 @@ sign transaction.
   "raw_transaction": "07010000020161015fb6a63a3361170afca03c9d5ce1f09fe510187d69545e09f95548b939cd7fffa3ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff80fc93afdf01000116001426bd1b851cf6eb8a701c20c184352ad8720eeee90100015d015bb6a63a3361170afca03c9d5ce1f09fe510187d69545e09f95548b939cd7fffa33152a15da72be51b330e1c0f8e1c0db669269809da4f16443ff266e07cc43680c03e0101160014489a678741ccc844f9e5c502f7fac0a665bedb25010003013effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff80a2cfa5df0101160014948fb4f500e66d20fbacb903fe108ee81f9b6d9500013a3152a15da72be51b330e1c0f8e1c0db669269809da4f16443ff266e07cc43680dd3d01160014cd5a822b34e3084413506076040d508bb12232c70001393152a15da72be51b330e1c0f8e1c0db669269809da4f16443ff266e07cc436806301160014a3f9111f3b0ee96cbd119a3ea5c60058f506fb1900",
   "signatures": [
     "0d432e6f0e22da3168d76552273e60d23d432d61b4dac53e6769d39a1097f1cd1bd8e54c7d39eda334803e5c904bc2de2f27ff29748166e0334dcfded20e980b"
+  ]
+}
+```
+
+==========================================================
+待开发的API接口：
+
+----
+
+## `createPubkey`
+
+create pubkey.
+
+### Parameters
+
+`Object`:
+
+- `String` - *xpub*, xpub.
+- `Integer` - *seed*, seed, default is 1.
+
+### Returns
+
+`Object`:
+
+- `String` - *xpub*, xpub.
+- `String` - *pubkey*, public key.
+- `Object` - *derived_path*, derived path array.
+
+```js
+// Request
+{
+  "xpub": "2d6c07cb1ff7800b0793e300cd62b6ec5c0943d308799427615be451ef09c0304bee5dd492c6b13aaa854d303dc4f1dcb229f9578786e19c52d860803efa3b9a",
+  "seed": 1
+}
+
+// Result
+{
+  "xpub": "2d6c07cb1ff7800b0793e300cd62b6ec5c0943d308799427615be451ef09c0304bee5dd492c6b13aaa854d303dc4f1dcb229f9578786e19c52d860803efa3b9a",
+  "pubkey": "ba5a63e7416caeb945eefc2ce874f40bc4aaf6005a1fc792557e41046f7e502f",
+  "derived_path": [
+    "010100000000000000",
+    "0500000000000000"
   ]
 }
 ```
