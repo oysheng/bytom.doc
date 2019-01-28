@@ -14,11 +14,13 @@
 
 #### response
 ```js
-{
-  "hash": "cc4e6501ce7d566e337523eeee0a696b38a20a040c9621b66fe4abaf86dedd81",
-  "asset": "d8202143b5ae3c607fbeb0b9f920149f551ed13c1a1c70f23f61a2cd19cc6c6f",
-  "amount": 100
-}
+[
+  {
+    "hash": "cc4e6501ce7d566e337523eeee0a696b38a20a040c9621b66fe4abaf86dedd81",
+    "asset": "d8202143b5ae3c607fbeb0b9f920149f551ed13c1a1c70f23f61a2cd19cc6c6f",
+    "amount": 100
+  }
+]
 ```
 
 -----
