@@ -39,11 +39,18 @@
 
 #### response
 ```js
-{
-  "address": "sm1qg5pq4qvk79h6nxt5ksqvu45rt7a9cstcfxctwq",
-  "asset": "d8202143b5ae3c607fbeb0b9f920149f551ed13c1a1c70f23f61a2cd19cc6c6f"
-  "amount": 100000000
-}
+[
+  {
+    "address": "sm1qg5pq4qvk79h6nxt5ksqvu45rt7a9cstcfxctwq",
+    "asset": "d8202143b5ae3c607fbeb0b9f920149f551ed13c1a1c70f23f61a2cd19cc6c6f",
+    "amount": 10000
+  },
+  {
+    "address": "sm1qg5pq4qvk79h6nxt5ksqvu45rt7a9cstcfxctwq",
+    "asset": "d8202143b5ae3c607fbeb0b9f920149f551ed13c1a1c70f23f61a2cd19cc6c6f",
+    "amount": -10000
+  }
+]
 ```
 
 -----
