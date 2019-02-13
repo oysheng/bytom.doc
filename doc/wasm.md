@@ -278,6 +278,7 @@ sign transaction.
 ```
 
 ==========================================================
+
 待开发的API接口：
 
 ----
@@ -345,37 +346,49 @@ convert argument.
 // Request
 {
   "type": "data",
-  "value": "ba5a63e7416caeb945eefc2ce874f40bc4aaf6005a1fc792557e41046f7e502f"
+  "raw_data": {
+    "value": "ba5a63e7416caeb945eefc2ce874f40bc4aaf6005a1fc792557e41046f7e502f"
+  }
 }
 
 //or 
 
 {
   "type": "integer",
-  "value": 100
+  "raw_data": {
+    "value": 100
+  }
 }
 
 //or 
 
 {
   "type": "string",
-  "value": "string"
+  "raw_data": {
+    "value": "string"
+  }
 }
 
 //or
 
 {
   "type": "boolean",
-  "value": true
+  "raw_data": {
+    "value": true
+  }
 }
 
 //or
 
 {
   "type": "address",
-  "value": "bm1q5u8u4eldhjf3lvnkmyl78jj8a75neuryzlknk0"
+  "raw_data": {
+    "value": "bm1q5u8u4eldhjf3lvnkmyl78jj8a75neuryzlknk0"
+  }
 }
+```
 
+```js
 // Result
 {
   "data": "ba5a63e7416caeb945eefc2ce874f40bc4aaf6005a1fc792557e41046f7e502f"
