@@ -48,6 +48,59 @@ type Predicate struct {
 }
 ```
 
+### txvm区块链Chain结构
+BlockBuilder用于构建新的区块，其中snapshot用于保存合约和nonce的世界状态信息，在打包区块的时候，根据已经完成验证的交易CommitmentsTx进行相关状态的更新。
+
+```go
+// Chain provides a complete, minimal blockchain database. It
+// delegates the underlying storage to other objects, and uses
+// validation logic from package validation to decide what
+// objects can be safely stored.
+type Chain struct {
+	InitialBlockHash bc.Hash
+	bb               *BlockBuilder
+
+	state struct {
+		cond     sync.Cond // protects height, block, snapshot
+		height   uint64
+		snapshot *state.Snapshot // current only if leader
+	}
+	store Store
+
+	lastQueuedSnapshotHeight uint64 // atomic access only
+	blocksPerSnapshot        uint64
+	pendingSnapshots         chan *state.Snapshot
+}
+
+type BlockBuilder struct {
+	Version        uint64
+	MaxNonceWindow time.Duration
+	MaxBlockWindow int64
+	MaxBlockTxs    int
+
+	snapshot    *state.Snapshot
+	txs         []*bc.CommitmentsTx
+	timestampMS uint64
+	runlimit    int64
+}
+
+// Snapshot contains a blockchain's state.
+//
+// TODO: consider making type Snapshot truly immutable.  We already
+// handle it that way in many places (with explicit calls to Copy to
+// get the right behavior).  PruneNonces and the Apply functions would
+// have to produce new Snapshots rather than updating Snapshots in
+// place.
+type Snapshot struct {
+	ContractsTree *patricia.Tree
+	NonceTree     *patricia.Tree
+
+	Header         *bc.BlockHeader
+	InitialBlockID bc.Hash
+	RefIDs         []bc.Hash
+}
+```
+
 ### txvm交易结构
 txvm交易中RawTx是交易的基础信息，其中RawTx中Program是根据交易输入的Action结构构造出来的，执行虚拟机的时候会将相关的状态信息保存到对应的执行Action（Inputs、Issuances、Outputs和Retirements）中，而RawTx中的Version用于区分虚拟机版本，runlimit用于解决图灵完备的虚拟机的停机问题。除了RawTx之外，结构中的其他字段都是执行txvm虚拟机时的保存的状态信息，交易正常结束之后，会将对应日志log保存到Log结构中。 
 
