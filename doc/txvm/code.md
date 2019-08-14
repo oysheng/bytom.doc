@@ -1,4 +1,13 @@
 ### txvm区块结构
+txvm目前采用了pos共识的模式产生新块，txvm区块由3个部分组成：区块头（BlockHeader）、交易列表（Transactions）和区块签名（Arguments）。
+
+txvm区块头包含了3棵状态树根：交易树（merkle tree）、合约树（patricia tree）和 nonce树（patricia tree）。
+- 交易树 用于检测交易是否在该区块中存在
+- 合约树 用于检测交易合约是否存在，是一个全局的世界状态树，如果合约被花费则从树中减去，如果产生新的合约则在树中加上
+- nonce树 用于检测交易合约是否在之前的区块(blockID)中存在并匹配，也是一个全局的世界状态树，主要用于防止交易输入伪造
+
+Predicate包含了出块公钥信息（Pubkeys），用于标识出块人信息。
+
 ```go
 type Block struct {
 	*UnsignedBlock
@@ -40,6 +49,8 @@ type Predicate struct {
 ```
 
 ### txvm交易结构
+txvm交易中RawTx是交易的基础信息，其中RawTx中Program是根据交易输入的Action结构构造出来的，执行虚拟机的时候会将相关的状态信息保存到对应的执行Action（Inputs、Issuances、Outputs和Retirements）中，而RawTx中的Version用于区分虚拟机版本，runlimit用于解决图灵完备的虚拟机的停机问题。除了RawTx之外，结构中的其他字段都是执行txvm虚拟机时的保存的状态信息，交易正常结束之后，会将对应日志log保存到Log结构中。 
+
 ```go
 // Tx contains the input to an instance of the txvm virtual machine,
 // plus parsed copies of its various side effects.
@@ -131,6 +142,8 @@ type Retirement struct {
 ```
 
 ### txvm虚拟机结构
+txvm虚拟机结构主要包含两个栈：参数栈（argstack）和合约栈（contract），参数栈保存外部输入的参数信息，而合约栈主要把保存当前调用合约的相关状态信息。此外，完成合约虚拟机的执行后，其结构中包含的字段 TxID、Log 和 Finalized 都会保存到txvm的交易中。 
+
 ```go
 type VM struct {
 	// Config/setup fields
@@ -149,7 +162,7 @@ type VM struct {
 	run       run 
 	runstack  []run
 	unwinding bool
-	contract  *contract     //调用的合约栈
+	contract  *contract     //当前调用的合约栈
 	caller    []byte
 	data      []byte
 	opcode    byte
