@@ -30,18 +30,18 @@ TXVM定义了一个基于栈式的虚拟机来执行交易程序（字符串类�
 
 ### 数据模型
 数据栈支持的数据类型主要分成两大类:（普通数据类型 和 入口类型），此外，为了方便调用，基于两种基本类型扩展生成了一些派生类型。其类型代码对照表如下：
-```go
-	InputCode           byte = 'I'
-	OutputCode          byte = 'O'
-	LogCode             byte = 'L'
-	TimerangeCode       byte = 'R'
-	NonceCode           byte = 'N'
-	IssueCode           byte = 'A'
-	RetireCode          byte = 'X'
-	FinalizeCode        byte = 'F'
-	ValueCode           byte = 'V'
-	ContractCode        byte = 'C'
-	WrappedContractCode byte = 'W'
+```
+    InputCode           : 'I'
+    OutputCode          : 'O'
+    LogCode             : 'L'
+    TimerangeCode       : 'R'
+    NonceCode           : 'N'
+    IssueCode           : 'A'
+    RetireCode          : 'X'
+    FinalizeCode        : 'F'
+    ValueCode           : 'V'
+    ContractCode        : 'C'
+    WrappedContractCode : 'W'
 ```
 
 #### 1）普通数据类型 plain data
