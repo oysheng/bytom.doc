@@ -30,12 +30,25 @@ TXVM定义了一个基于栈式的虚拟机来执行交易程序（字符串类�
 交易程序执行的时候需要指定一个运行开销上限（runlimit，类似于以太坊的gaslimit），每条指令都有一个非零的开销，一个合约程序执行的总开销不能大于指定的运行开销上限（runlimit），一旦执行的时候超过了这个上限值，交易将被拒绝。一个交易程序合法的标志是程序执行成功并且数据栈为空。
 
 ### 数据模型
-数据栈支持的数据类型主要分成两大类:（普通数据类型 和 入口类型）
+数据栈支持的数据类型主要分成两大类:（普通数据类型 和 入口类型），此外，为了方便调用，基于两种基本类型扩展生成了一些派生类型。其类型代码对照表如下：
+```go
+	InputCode           byte = 'I'
+	OutputCode          byte = 'O'
+	LogCode             byte = 'L'
+	TimerangeCode       byte = 'R'
+	NonceCode           byte = 'N'
+	IssueCode           byte = 'A'
+	RetireCode          byte = 'X'
+	FinalizeCode        byte = 'F'
+	ValueCode           byte = 'V'
+	ContractCode        byte = 'C'
+	WrappedContractCode byte = 'W'
+```
 
 #### 1）普通数据类型 plain data
 - 整型(integer): 64位的整型，范围为[-2^63, 2^63 - 1]
 - 字符串(string): 字节型字符串，长度范围为[0, 2^31 - 1]
-- 元组(tuple): 不可变的序列，0~N个普通数据类型
+- 元组(tuple): 不可变的序列，0~N个普通数据类型q
 
 #### 2）入口类型 entries
 - 资产数值(values): 特定资产类型的特定资产数量（例如5BTM，10USD），它是一个tuple类型，由4个部分组成: 
