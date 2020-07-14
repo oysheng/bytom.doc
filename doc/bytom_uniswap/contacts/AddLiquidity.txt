@@ -1,0 +1,18 @@
+contract AddLiquidity(assetX: Asset,
+                      assetY: Asset,
+                      agentKey: PublicKey,
+                      contractX: Program,
+                      contractY: Program) locks amountM of assetM {
+  clause add(newPoolAmountX: Amount, newPoolAmountY: Amount, 
+    oldPoolAmountM: Amount, oldPoolAmountX: Amount, oldPoolAmountY: Amount, agentSig: Signature) {
+    verify newPoolAmountX > 0 && newPoolAmountY > 0
+    verify oldPoolAmountM > 0 && oldPoolAmountX > 0 && oldPoolAmountY > 0
+    verify oldPoolAmountX * oldPoolAmountY == oldPoolAmountM
+    verify oldPoolAmountX / oldPoolAmountY == newPoolAmountX / newPoolAmountY
+    // verify oldPoolAmountX * newPoolAmountY == newPoolAmountX * oldPoolAmountY
+    verify checkTxSig(agentKey, agentSig)
+    lock newPoolAmountX of assetX with contractX
+    lock newPoolAmountY of assetY with contractY
+    unlock newPoolAmountX*newPoolAmountY of assetM
+  }
+}

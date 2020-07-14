@@ -1,0 +1,42 @@
+contract UniswapTrade(assetX: Asset,
+                     assetM: Asset,
+                     contractX: Program,
+                     agentKey: PublicKey,
+                     manager: Program,
+                     managerKey: PublicKey) locks amountY of assetY {
+  clause trade(unlockAmount: Amount, poolAmountX: Amount, poolAmountY: Amount, totalAmountM: Amount, agentSig: Signature) {
+    verify unlockAmount > 0 && poolAmountX > 0 && poolAmountY > 0 && totalAmountM > 0
+    verify poolAmountX * poolAmountY == totalAmountM
+    define fee: Integer = unlockAmount/1000
+    define newPoolAmountX: Integer = poolAmountX + unlockAmount - fee
+    define newPoolAmountY: Integer = totalAmountM / newPoolAmountX
+    define gain: Integer = poolAmountY - newPoolAmountY
+    verify checkTxSig(agentKey, agentSig)
+    if gain < amountY {
+      lock unlockAmount of assetX with contractX
+      lock amountY - gain of assetY with UniswapTrade(assetX, assetM, contractX, agentKey, manager, managerKey)
+      unlock gain of assetY
+    } else {
+      lock unlockAmount of assetX with contractX
+      unlock amountY of assetY
+    }
+  }
+  clause remove(unlockLiquidityAmount: Amount, poolAmountX: Amount, poolAmountY: Amount, totalAmountM: Amount, agentSig: Signature) {
+    verify unlockLiquidityAmount > 0 && poolAmountX > 0 && poolAmountY > 0 && totalAmountM > 0
+    verify poolAmountX * poolAmountY == totalAmountM
+    define liquidity: Integer = unlockLiquidityAmount * poolAmountY / totalAmountM
+    verify checkTxSig(agentKey, agentSig)
+    if liquidity < amountY {
+      lock unlockLiquidityAmount of assetM with manager
+      lock amountY - liquidity of assetY with UniswapTrade(assetX, assetM, contractX, agentKey, manager, managerKey)
+      unlock liquidity of assetY
+    } else {
+      lock unlockLiquidityAmount of assetX with manager
+      unlock amountY of assetY
+    }
+  }
+  clause cancel(managerSig: Signature) {
+    verify checkTxSig(managerKey, managerSig)
+    unlock amountY of assetY
+  }
+}
