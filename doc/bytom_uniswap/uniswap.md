@@ -106,6 +106,21 @@ bytom系统中的uniswap流程图如下：
 
 
 上述流程图大致描述了uniswap的交互流程，里面主要包含了3个合约：X资产池、Y资产池、M资产的总流动性池。
+其主要功能描述如下：
+
+1）trade 币币交易，用户只需要输入兑换的金额X，poolAmountX、poolAmountX、totalAmountM可以通过统计对应合约中的utxo的金额统计结果来输入，同时使用第三方签名来验证poolAmountX、poolAmountX、totalAmountM是否正确，否则交易不予通过
+
+2）remove 减少流动性，流动性提供者用户推出流动性池的时候调用，由于资产池X和资产池Y分属于两个不同的合约，所以在减少流动性返回资产对应比例的XY资产时，不一定时原子交易，需要中心化来控制两笔交易同时执行（因为checkoutput需要验证位置信息，后续可以根据合约改造，将两笔交易放在同一笔交易中）。同时这里的流动性池资产是放到 manager账户中，正常情况下应该是销毁资产，可以根据实际情况来调整
+
+2）cancel 取消合约，合约的管控措施
+
+注意事项如下：
+
+1） UniswapTrade 其实是 poolX 和 poolY 共同使用的合约模版，contractX 和  contractY 分别表示对应的合约程序，这么设计是为了防止合约编译器递归调用问题，使用合约参数模式可以解决该递归问题
+
+2）AddLiquidity 合约中的 contractX 和 contractY 也是为了解决递归问题而设计的
+
+3）agentSig 是中心化的管控，用于保证合约执行过程中，各个池子的变化在用户输入的情况下也能保持输入数据的正确性
 
 
 ### uniswap交易
